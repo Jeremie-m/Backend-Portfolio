@@ -65,7 +65,3 @@ npm run dev
 ## Authentification
 
 L'accès aux routes d'administration nécessite une authentification via JWT.
-
-## Contribution
-
-Les contributions sont les bienvenues ! N'hésitez pas à ouvrir une issue ou un pull request. 

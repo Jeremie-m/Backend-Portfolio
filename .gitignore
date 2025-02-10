@@ -31,9 +31,15 @@ yarn-error.log*
 *.sqlite3
 *.db
 
+# VS Code
+.vscode/
+
+# Logs
+logs
+*.log
+
 # IDE
 .idea/
-.vscode/
 
 # Vercel
 .vercel
