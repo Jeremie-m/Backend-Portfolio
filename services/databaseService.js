@@ -1,5 +1,7 @@
 import Database from 'better-sqlite3';
 import path from 'path';
+import { dbConfig } from '../config/database';
+import crypto from 'crypto';
 
 class DatabaseService {
   constructor() {
@@ -10,11 +12,19 @@ class DatabaseService {
     if (this.db) return;
 
     try {
-      // Connexion à la base de données
-      this.db = new Database(path.join(process.cwd(), 'data', 'portfolio.db'));
+      // Connexion à la base de données avec la configuration
+      this.db = new Database(
+        path.join(process.cwd(), dbConfig.filename),
+        dbConfig.options
+      );
       
       // Activer les clés étrangères
       this.db.pragma('foreign_keys = ON');
+
+      // Créer la fonction UUID
+      this.db.function('uuid', () => {
+        return crypto.randomUUID();
+      });
 
       // Créer les tables si elles n'existent pas
       this.createTables();
@@ -37,7 +47,8 @@ class DatabaseService {
         github_link TEXT,
         demo_link TEXT,
         category TEXT,
-        image_url TEXT
+        image_url TEXT,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
       )
     `);
 
@@ -61,15 +72,17 @@ class DatabaseService {
         name TEXT NOT NULL,
         category TEXT,
         description TEXT,
-        image_url TEXT
+        image_url TEXT,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
       )
     `);
 
-    // Création de la table tags (optionnelle)
+    // Création de la table tags
     this.db.exec(`
       CREATE TABLE IF NOT EXISTS tags (
         id TEXT PRIMARY KEY DEFAULT (uuid()),
-        name TEXT NOT NULL UNIQUE
+        name TEXT NOT NULL UNIQUE,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
       )
     `);
 
@@ -78,6 +91,7 @@ class DatabaseService {
       CREATE TABLE IF NOT EXISTS post_tags (
         post_id TEXT,
         tag_id TEXT,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
         FOREIGN KEY (post_id) REFERENCES blog_posts(id) ON DELETE CASCADE,
         FOREIGN KEY (tag_id) REFERENCES tags(id) ON DELETE CASCADE,
         PRIMARY KEY (post_id, tag_id)
