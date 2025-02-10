@@ -53,4 +53,8 @@ crud.md
 db.md
 
 # Cursor
-.cursor/ 
+.cursor/
+
+# Database
+/data
+*.db 
