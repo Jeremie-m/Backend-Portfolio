@@ -185,7 +185,7 @@
     "napi-build-utils": "^2.0.0",
     "negotiator": "^0.6.4",
     "neotraverse": "^0.6.18",
-    "next": "^14.2.23",
+    "next": "^15.1.7",
     "next-swagger-doc": "^0.4.1",
     "node-abi": "^3.74.0",
     "node-abort-controller": "^3.1.1",
