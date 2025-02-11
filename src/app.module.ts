@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
+import { ThrottlerModule } from '@nestjs/throttler';
 import { ProjectsModule } from './projects/projects.module';
 import { BlogModule } from './blog/blog.module';
 import { TechnologiesModule } from './technologies/technologies.module';
@@ -12,6 +13,10 @@ import { AppController } from './app.controller';
     ConfigModule.forRoot({
       isGlobal: true, // Rend la configuration disponible dans tous les modules
     }),
+    ThrottlerModule.forRoot([{
+      ttl: 60000, // 1 minute
+      limit: 5, // 5 requêtes maximum
+    }]),
     DatabaseModule,
     ProjectsModule,
     BlogModule,
