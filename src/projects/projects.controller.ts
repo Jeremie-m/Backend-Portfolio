@@ -1,9 +1,12 @@
-import { Controller, Get, Post, Put, Delete, Body, Param, Query } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { Controller, Get, Post, Put, Delete, Body, Param, Query, UseGuards } from '@nestjs/common';
+import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { CreateProjectDto } from './dto/create-project.dto';
 import { UpdateProjectDto } from './dto/update-project.dto';
 import { ProjectDto } from './dto/project.dto';
 import { FindProjectsDto } from './dto/find-projects.dto';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { RolesGuard } from '../auth/guards/roles.guard';
+import { Roles } from '../auth/decorators/roles.decorator';
 
 @ApiTags('Projects')
 @Controller('projects')
@@ -37,11 +40,22 @@ export class ProjectsController {
   }
 
   @Post()
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('admin')
+  @ApiBearerAuth()
   @ApiOperation({ summary: 'Créer un nouveau projet' })
   @ApiResponse({
     status: 201,
     description: 'Projet créé avec succès',
     type: ProjectDto
+  })
+  @ApiResponse({
+    status: 401,
+    description: 'Non authentifié'
+  })
+  @ApiResponse({
+    status: 403,
+    description: 'Non autorisé - Réservé aux administrateurs'
   })
   create(@Body() createProjectDto: CreateProjectDto): Promise<ProjectDto> {
     // TODO: Implémenter la logique
@@ -49,11 +63,22 @@ export class ProjectsController {
   }
 
   @Put(':id')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('admin')
+  @ApiBearerAuth()
   @ApiOperation({ summary: 'Mettre à jour un projet' })
   @ApiResponse({
     status: 200,
     description: 'Projet mis à jour avec succès',
     type: ProjectDto
+  })
+  @ApiResponse({
+    status: 401,
+    description: 'Non authentifié'
+  })
+  @ApiResponse({
+    status: 403,
+    description: 'Non autorisé - Réservé aux administrateurs'
   })
   @ApiResponse({
     status: 404,
@@ -68,10 +93,21 @@ export class ProjectsController {
   }
 
   @Delete(':id')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('admin')
+  @ApiBearerAuth()
   @ApiOperation({ summary: 'Supprimer un projet' })
   @ApiResponse({
     status: 200,
     description: 'Projet supprimé avec succès'
+  })
+  @ApiResponse({
+    status: 401,
+    description: 'Non authentifié'
+  })
+  @ApiResponse({
+    status: 403,
+    description: 'Non autorisé - Réservé aux administrateurs'
   })
   @ApiResponse({
     status: 404,

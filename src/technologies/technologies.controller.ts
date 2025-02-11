@@ -1,9 +1,12 @@
-import { Controller, Get, Post, Put, Delete, Body, Param, Query } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { Controller, Get, Post, Put, Delete, Body, Param, Query, UseGuards } from '@nestjs/common';
+import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { CreateTechnologyDto } from './dto/create-technology.dto';
 import { UpdateTechnologyDto } from './dto/update-technology.dto';
 import { TechnologyDto } from './dto/technology.dto';
 import { FindTechnologiesDto } from './dto/find-technologies.dto';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { RolesGuard } from '../auth/guards/roles.guard';
+import { Roles } from '../auth/decorators/roles.decorator';
 
 @ApiTags('Technologies')
 @Controller('technologies')
@@ -37,11 +40,22 @@ export class TechnologiesController {
   }
 
   @Post()
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('admin')
+  @ApiBearerAuth()
   @ApiOperation({ summary: 'Créer une nouvelle technologie' })
   @ApiResponse({
     status: 201,
     description: 'Technologie créée avec succès',
     type: TechnologyDto
+  })
+  @ApiResponse({
+    status: 401,
+    description: 'Non authentifié'
+  })
+  @ApiResponse({
+    status: 403,
+    description: 'Non autorisé - Réservé aux administrateurs'
   })
   create(@Body() createTechnologyDto: CreateTechnologyDto): Promise<TechnologyDto> {
     // TODO: Implémenter la logique
@@ -49,11 +63,22 @@ export class TechnologiesController {
   }
 
   @Put(':id')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('admin')
+  @ApiBearerAuth()
   @ApiOperation({ summary: 'Mettre à jour une technologie' })
   @ApiResponse({
     status: 200,
     description: 'Technologie mise à jour avec succès',
     type: TechnologyDto
+  })
+  @ApiResponse({
+    status: 401,
+    description: 'Non authentifié'
+  })
+  @ApiResponse({
+    status: 403,
+    description: 'Non autorisé - Réservé aux administrateurs'
   })
   @ApiResponse({
     status: 404,
@@ -68,10 +93,21 @@ export class TechnologiesController {
   }
 
   @Delete(':id')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('admin')
+  @ApiBearerAuth()
   @ApiOperation({ summary: 'Supprimer une technologie' })
   @ApiResponse({
     status: 200,
     description: 'Technologie supprimée avec succès'
+  })
+  @ApiResponse({
+    status: 401,
+    description: 'Non authentifié'
+  })
+  @ApiResponse({
+    status: 403,
+    description: 'Non autorisé - Réservé aux administrateurs'
   })
   @ApiResponse({
     status: 404,
