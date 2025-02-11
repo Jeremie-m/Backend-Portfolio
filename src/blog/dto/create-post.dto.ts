@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsString, IsNotEmpty, IsOptional, IsArray } from 'class-validator';
+import { IsString, IsNotEmpty, IsOptional, IsArray, IsUrl } from 'class-validator';
 
 export class CreatePostDto {
   @ApiProperty({
@@ -19,13 +19,22 @@ export class CreatePostDto {
   content: string;
 
   @ApiProperty({
-    description: 'Image de couverture de l\'article',
-    example: 'https://example.com/image.jpg',
+    description: 'Description méta pour le SEO',
+    example: 'Un article sur le développement web avec NestJS',
     required: false
   })
   @IsString()
   @IsOptional()
-  coverImage?: string;
+  meta_description?: string;
+
+  @ApiProperty({
+    description: 'URL de l\'image de couverture',
+    example: 'https://example.com/image.jpg',
+    required: false
+  })
+  @IsUrl()
+  @IsOptional()
+  image_url?: string;
 
   @ApiProperty({
     description: 'Tags associés à l\'article',

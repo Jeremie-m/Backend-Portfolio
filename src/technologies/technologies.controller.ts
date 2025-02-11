@@ -7,10 +7,13 @@ import { FindTechnologiesDto } from './dto/find-technologies.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
+import { TechnologiesService } from './technologies.service';
 
 @ApiTags('Technologies')
 @Controller('technologies')
 export class TechnologiesController {
+  constructor(private readonly technologiesService: TechnologiesService) {}
+
   @Get()
   @ApiOperation({ summary: 'Récupérer la liste des technologies' })
   @ApiResponse({
@@ -18,9 +21,8 @@ export class TechnologiesController {
     description: 'Liste des technologies récupérée avec succès',
     type: [TechnologyDto]
   })
-  findAll(@Query() query: FindTechnologiesDto): Promise<TechnologyDto[]> {
-    // TODO: Implémenter la logique
-    return Promise.resolve([]);
+  findAll(@Query() query: FindTechnologiesDto): Promise<{ data: TechnologyDto[]; total: number }> {
+    return this.technologiesService.findAll(query);
   }
 
   @Get(':id')
@@ -35,8 +37,7 @@ export class TechnologiesController {
     description: 'Technologie non trouvée'
   })
   findOne(@Param('id') id: string): Promise<TechnologyDto> {
-    // TODO: Implémenter la logique
-    return Promise.resolve(null);
+    return this.technologiesService.findOne(id);
   }
 
   @Post()
@@ -58,8 +59,7 @@ export class TechnologiesController {
     description: 'Non autorisé - Réservé aux administrateurs'
   })
   create(@Body() createTechnologyDto: CreateTechnologyDto): Promise<TechnologyDto> {
-    // TODO: Implémenter la logique
-    return Promise.resolve(null);
+    return this.technologiesService.create(createTechnologyDto);
   }
 
   @Put(':id')
@@ -88,8 +88,7 @@ export class TechnologiesController {
     @Param('id') id: string,
     @Body() updateTechnologyDto: UpdateTechnologyDto,
   ): Promise<TechnologyDto> {
-    // TODO: Implémenter la logique
-    return Promise.resolve(null);
+    return this.technologiesService.update(id, updateTechnologyDto);
   }
 
   @Delete(':id')
@@ -114,7 +113,6 @@ export class TechnologiesController {
     description: 'Technologie non trouvée'
   })
   remove(@Param('id') id: string): Promise<void> {
-    // TODO: Implémenter la logique
-    return Promise.resolve();
+    return this.technologiesService.remove(id);
   }
 } 

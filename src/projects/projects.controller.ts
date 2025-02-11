@@ -7,10 +7,13 @@ import { FindProjectsDto } from './dto/find-projects.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
+import { ProjectsService } from './projects.service';
 
 @ApiTags('Projects')
 @Controller('projects')
 export class ProjectsController {
+  constructor(private readonly projectsService: ProjectsService) {}
+
   @Get()
   @ApiOperation({ summary: 'Récupérer la liste des projets' })
   @ApiResponse({
@@ -18,9 +21,8 @@ export class ProjectsController {
     description: 'Liste des projets récupérée avec succès',
     type: [ProjectDto]
   })
-  findAll(@Query() query: FindProjectsDto): Promise<ProjectDto[]> {
-    // TODO: Implémenter la logique
-    return Promise.resolve([]);
+  findAll(@Query() query: FindProjectsDto): Promise<{ data: ProjectDto[]; total: number }> {
+    return this.projectsService.findAll(query);
   }
 
   @Get(':id')
@@ -35,8 +37,7 @@ export class ProjectsController {
     description: 'Projet non trouvé'
   })
   findOne(@Param('id') id: string): Promise<ProjectDto> {
-    // TODO: Implémenter la logique
-    return Promise.resolve(null);
+    return this.projectsService.findOne(id);
   }
 
   @Post()
@@ -58,8 +59,7 @@ export class ProjectsController {
     description: 'Non autorisé - Réservé aux administrateurs'
   })
   create(@Body() createProjectDto: CreateProjectDto): Promise<ProjectDto> {
-    // TODO: Implémenter la logique
-    return Promise.resolve(null);
+    return this.projectsService.create(createProjectDto);
   }
 
   @Put(':id')
@@ -88,8 +88,7 @@ export class ProjectsController {
     @Param('id') id: string,
     @Body() updateProjectDto: UpdateProjectDto,
   ): Promise<ProjectDto> {
-    // TODO: Implémenter la logique
-    return Promise.resolve(null);
+    return this.projectsService.update(id, updateProjectDto);
   }
 
   @Delete(':id')
@@ -114,7 +113,6 @@ export class ProjectsController {
     description: 'Projet non trouvé'
   })
   remove(@Param('id') id: string): Promise<void> {
-    // TODO: Implémenter la logique
-    return Promise.resolve();
+    return this.projectsService.remove(id);
   }
 } 

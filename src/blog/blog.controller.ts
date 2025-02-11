@@ -7,10 +7,13 @@ import { FindPostsDto } from './dto/find-posts.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
+import { BlogService } from './blog.service';
 
 @ApiTags('Blog')
 @Controller('blog')
 export class BlogController {
+  constructor(private readonly blogService: BlogService) {}
+
   @Get()
   @ApiOperation({ summary: 'Récupérer la liste des articles' })
   @ApiResponse({
@@ -18,9 +21,8 @@ export class BlogController {
     description: 'Liste des articles récupérée avec succès',
     type: [PostDto]
   })
-  findAll(@Query() query: FindPostsDto): Promise<PostDto[]> {
-    // TODO: Implémenter la logique
-    return Promise.resolve([]);
+  findAll(@Query() query: FindPostsDto): Promise<{ data: PostDto[]; total: number }> {
+    return this.blogService.findAll(query);
   }
 
   @Get(':id')
@@ -35,8 +37,7 @@ export class BlogController {
     description: 'Article non trouvé'
   })
   findOne(@Param('id') id: string): Promise<PostDto> {
-    // TODO: Implémenter la logique
-    return Promise.resolve(null);
+    return this.blogService.findOne(id);
   }
 
   @Post()
@@ -58,8 +59,7 @@ export class BlogController {
     description: 'Non autorisé - Réservé aux administrateurs'
   })
   create(@Body() createPostDto: CreatePostDto): Promise<PostDto> {
-    // TODO: Implémenter la logique
-    return Promise.resolve(null);
+    return this.blogService.create(createPostDto);
   }
 
   @Put(':id')
@@ -88,8 +88,7 @@ export class BlogController {
     @Param('id') id: string,
     @Body() updatePostDto: UpdatePostDto,
   ): Promise<PostDto> {
-    // TODO: Implémenter la logique
-    return Promise.resolve(null);
+    return this.blogService.update(id, updatePostDto);
   }
 
   @Delete(':id')
@@ -114,7 +113,6 @@ export class BlogController {
     description: 'Article non trouvé'
   })
   remove(@Param('id') id: string): Promise<void> {
-    // TODO: Implémenter la logique
-    return Promise.resolve();
+    return this.blogService.remove(id);
   }
 } 

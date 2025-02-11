@@ -3,7 +3,7 @@ import { ApiProperty } from '@nestjs/swagger';
 export class PostDto {
   @ApiProperty({
     description: 'Identifiant unique de l\'article',
-    example: '1'
+    example: '123e4567-e89b-12d3-a456-426614174000'
   })
   id: string;
 
@@ -20,23 +20,24 @@ export class PostDto {
   content: string;
 
   @ApiProperty({
-    description: 'Date de création de l\'article',
+    description: 'Date de publication de l\'article',
     example: '2024-03-15T10:30:00Z'
   })
-  createdAt: Date;
+  publication_date: Date;
 
   @ApiProperty({
-    description: 'Date de dernière modification de l\'article',
-    example: '2024-03-15T10:30:00Z'
+    description: 'Description méta pour le SEO',
+    example: 'Un article sur le développement web avec NestJS',
+    required: false
   })
-  updatedAt: Date;
+  meta_description?: string;
 
   @ApiProperty({
-    description: 'Image de couverture de l\'article',
+    description: 'URL de l\'image',
     example: 'https://example.com/image.jpg',
     required: false
   })
-  coverImage?: string;
+  image_url?: string;
 
   @ApiProperty({
     description: 'Tags associés à l\'article',
