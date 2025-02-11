@@ -18,10 +18,15 @@ async function bootstrap() {
     .build();
 
   const document = SwaggerModule.createDocument(app, config);
+  
+  // Documentation accessible à /docs et /api/docs
+  SwaggerModule.setup('docs', app, document);
   SwaggerModule.setup('api/docs', app, document);
 
-  // Préfixe global pour toutes les routes
-  app.setGlobalPrefix('api');
+  // Préfixe global pour toutes les routes API
+  app.setGlobalPrefix('api', {
+    exclude: ['/', '/docs'], // Exclure la racine et la documentation du préfixe global
+  });
 
   await app.listen(3000);
 }

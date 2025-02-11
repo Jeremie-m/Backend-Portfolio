@@ -1,7 +1,8 @@
 import { Injectable, OnModuleInit, OnModuleDestroy } from '@nestjs/common';
-import Database from 'better-sqlite3';
+import * as Database from 'better-sqlite3';
 import * as path from 'path';
 import * as crypto from 'crypto';
+import * as fs from 'fs';
 
 @Injectable()
 export class DatabaseService implements OnModuleInit, OnModuleDestroy {
@@ -19,7 +20,13 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
 
   private initializeDatabase() {
     try {
-      this.db = new Database(path.join(process.cwd(), 'data', 'portfolio.db'));
+      // Créer le dossier data s'il n'existe pas
+      const dataDir = path.join(process.cwd(), 'data');
+      if (!fs.existsSync(dataDir)) {
+        fs.mkdirSync(dataDir);
+      }
+
+      this.db = new Database(path.join(dataDir, 'portfolio.db'));
       
       // Activer les clés étrangères
       this.db.pragma('foreign_keys = ON');
