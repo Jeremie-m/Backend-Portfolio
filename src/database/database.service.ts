@@ -1,32 +1,33 @@
+import { Injectable, OnModuleInit, OnModuleDestroy } from '@nestjs/common';
 import Database from 'better-sqlite3';
-import path from 'path';
-import { dbConfig } from '../config/database';
-import crypto from 'crypto';
+import * as path from 'path';
+import * as crypto from 'crypto';
 
-class DatabaseService {
-  constructor() {
-    this.db = null;
+@Injectable()
+export class DatabaseService implements OnModuleInit, OnModuleDestroy {
+  private db: Database.Database;
+
+  async onModuleInit() {
+    this.initializeDatabase();
   }
 
-  initialize() {
-    if (this.db) return;
+  async onModuleDestroy() {
+    if (this.db) {
+      this.db.close();
+    }
+  }
 
+  private initializeDatabase() {
     try {
-      // Connexion à la base de données avec la configuration
-      this.db = new Database(
-        path.join(process.cwd(), dbConfig.filename),
-        dbConfig.options
-      );
+      this.db = new Database(path.join(process.cwd(), 'data', 'portfolio.db'));
       
       // Activer les clés étrangères
       this.db.pragma('foreign_keys = ON');
 
       // Créer la fonction UUID
-      this.db.function('uuid', () => {
-        return crypto.randomUUID();
-      });
+      this.db.function('uuid', () => crypto.randomUUID());
 
-      // Créer les tables si elles n'existent pas
+      // Créer les tables
       this.createTables();
 
       console.log('Base de données initialisée avec succès');
@@ -36,7 +37,7 @@ class DatabaseService {
     }
   }
 
-  createTables() {
+  private createTables() {
     // Création de la table projects
     this.db.exec(`
       CREATE TABLE IF NOT EXISTS projects (
@@ -99,22 +100,7 @@ class DatabaseService {
     `);
   }
 
-  // Méthode pour obtenir une instance de la base de données
-  getDatabase() {
-    if (!this.db) {
-      this.initialize();
-    }
+  getDatabase(): Database.Database {
     return this.db;
   }
-
-  // Méthode pour fermer la connexion
-  close() {
-    if (this.db) {
-      this.db.close();
-      this.db = null;
-    }
-  }
-}
-
-// Export d'une instance unique (pattern Singleton)
-export const databaseService = new DatabaseService(); 
+} 
