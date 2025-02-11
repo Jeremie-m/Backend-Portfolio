@@ -28,6 +28,9 @@ async function bootstrap() {
     exclude: ['/', '/docs'], // Exclure la racine et la documentation du préfixe global
   });
 
-  await app.listen(3000);
+  // Utiliser le port depuis l'environnement ou 3000 par défaut
+  const port = process.env.PORT || 3000;
+  await app.listen(port);
+  console.log(`Application is running on: http://localhost:${port}`);
 }
 bootstrap(); 
