@@ -1,14 +1,14 @@
-import { Injectable, OnModuleInit, OnModuleDestroy } from '@nestjs/common';
+import { Injectable, OnModuleDestroy } from '@nestjs/common';
 import * as Database from 'better-sqlite3';
 import * as path from 'path';
 import * as crypto from 'crypto';
 import * as fs from 'fs';
 
 @Injectable()
-export class DatabaseService implements OnModuleInit, OnModuleDestroy {
+export class DatabaseService implements OnModuleDestroy {
   private db: Database.Database;
 
-  async onModuleInit() {
+  constructor() {
     this.initializeDatabase();
   }
 
