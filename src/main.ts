@@ -9,23 +9,34 @@ async function bootstrap() {
   // Configuration globale des pipes de validation
   app.useGlobalPipes(new ValidationPipe());
 
+  // Préfixe global pour toutes les routes API
+  app.setGlobalPrefix('api', {
+    exclude: ['/', '/docs'], // Exclure la racine et la documentation du préfixe global
+  });
+
   // Configuration Swagger
   const config = new DocumentBuilder()
     .setTitle('Portfolio API')
     .setDescription('API pour le portfolio personnel')
     .setVersion('1.0')
     .addBearerAuth()
+    .addServer('/') // Ajout du serveur racine
     .build();
 
   const document = SwaggerModule.createDocument(app, config);
   
   // Documentation accessible à /docs et /api/docs
-  SwaggerModule.setup('docs', app, document);
-  SwaggerModule.setup('api/docs', app, document);
-
-  // Préfixe global pour toutes les routes API
-  app.setGlobalPrefix('api', {
-    exclude: ['/', '/docs'], // Exclure la racine et la documentation du préfixe global
+  SwaggerModule.setup('docs', app, document, {
+    swaggerOptions: {
+      persistAuthorization: true,
+    },
+    useGlobalPrefix: true // Utiliser le préfixe global
+  });
+  SwaggerModule.setup('api/docs', app, document, {
+    swaggerOptions: {
+      persistAuthorization: true,
+    },
+    useGlobalPrefix: true // Utiliser le préfixe global
   });
 
   // Utiliser le port depuis l'environnement ou 3000 par défaut
