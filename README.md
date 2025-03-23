@@ -1,15 +1,16 @@
 # Portfolio Backend
 
-Ce projet est le backend de mon portfolio personnel, développé avec NestJS et SQLite.
+Ce projet est le backend de mon portfolio personnel, développé avec NestJS et SQLite, entièrement en TypeScript.
 
 ## Technologies Utilisées
 
 - **Framework:** NestJS
+- **Langage:** TypeScript
 - **Base de données:** SQLite avec better-sqlite3
 - **Authentification:** JWT (JSON Web Tokens)
 - **Documentation:** Swagger/OpenAPI
 - **Validation:** class-validator et class-transformer
-- **Sécurité:** bcrypt pour le hachage des mots de passe, rate limiting
+- **Sécurité:** bcrypt pour le hachage des mots de passe (salt factor 10), rate limiting, validation regex
 
 ## Structure du Projet
 
@@ -17,12 +18,14 @@ Le projet est organisé autour des entités principales :
 - **Projets:** Gestion des projets du portfolio
 - **Skills:** Liste des technologies maîtrisées
 - **AboutMe:** Informations personnelles et présentation
+- **Auth:** Système d'authentification et contrôle d'accès
 
 ## Fonctionnalités
 
 - CRUD complet pour les projets et technologies
 - Système d'authentification JWT avec rôle admin
-- Protection contre les attaques par force brute (rate limiting)
+- Protection contre les attaques par force brute (rate limiting configurable)
+- Validation avancée des données avec expressions régulières
 - Pagination et filtres pour toutes les listes
 - Gestion du contenu "À propos de moi"
 - Documentation API interactive avec Swagger
@@ -31,7 +34,7 @@ Le projet est organisé autour des entités principales :
 
 1. Cloner le projet
 ```bash
-git clone [URL_DU_REPO]
+git clone https://github.com/Jeremie-m/Backend-Portfolio.git
 cd backend-portfolio
 ```
 
@@ -44,6 +47,9 @@ npm install
 ```bash
 cp .env.example .env
 # Modifier les variables dans .env selon vos besoins
+# ADMIN_EMAIL - Email de l'administrateur (défaut: admin@example.com)
+# ADMIN_PASSWORD - Mot de passe administrateur (défaut: P@ssw0rd123!)
+# JWT_SECRET - Clé secrète pour les tokens JWT
 ```
 
 4. Lancer le serveur de développement
@@ -54,8 +60,8 @@ npm run start:dev
 ## Documentation API
 
 La documentation complète de l'API est disponible via Swagger UI :
-- En développement : http://localhost:3001/docs
-- En production : http://votre-domaine.com/docs
+- En développement : http://localhost:3001/api/docs
+- En production : http://votre-domaine.com/api/docs
 
 ## API Routes
 
@@ -74,20 +80,28 @@ La documentation complète de l'API est disponible via Swagger UI :
 - `DELETE /api/skills/:id` - Supprime une technologie (admin)
 
 ### AboutMe
-- `GET /api/aboutme` - Obtient les informations "À propos de moi"
-- `PUT /api/aboutme` - Met à jour les informations "À propos de moi" (admin)
+- `GET /api/about-me` - Obtient les informations "À propos de moi"
+- `PUT /api/about-me` - Met à jour les informations "À propos de moi" (admin)
 
 ### Authentification
 - `POST /api/auth/login` - Connexion (avec rate limiting)
 
 ## Sécurité
 
-- Authentification requise pour toutes les opérations POST PUT DELETE
-- Rate limiting sur la route de login (5 tentatives par minute)
-- Validation des données entrantes
-- Hachage des mots de passe avec bcrypt
-- Protection CORS
-- Préfixe global /api pour toutes les routes
+- **Authentification JWT** pour contrôler l'accès aux routes protégées
+- **Validation stricte des entrées** avec class-validator et expressions régulières
+- **Protection contre les injections SQL** grâce aux requêtes paramétrées
+- **Rate limiting ciblé** sur les routes sensibles comme le login
+- **Hachage des mots de passe** avec bcrypt (facteur de salt 12)
+- **Vérification des rôles** pour les opérations administratives
+- **Protection CORS** configurable
+
+## Validation des entrées
+
+Les entrées utilisateur sont validées à plusieurs niveaux :
+- **DTO avec décorateurs** pour la validation structurelle
+- **Expressions régulières** pour valider le format des données sensibles (email, mot de passe)
+- **Contraintes SQL** au niveau de la base de données
 
 ## Scripts disponibles
 
@@ -97,3 +111,11 @@ La documentation complète de l'API est disponible via Swagger UI :
 - `npm run start:debug` - Lance le serveur en mode debug
 - `npm run lint` - Vérifie le style du code
 - `npm run test` - Lance les tests unitaires
+
+## Tests API
+
+Le projet inclut un fichier pour tester l'API avec l'extension REST Client de VS Code. Pour l'utiliser :
+1. Installez l'extension REST Client dans VS Code
+2. Ouvrez le fichier `tests.http`
+3. Cliquez sur "Send Request" au-dessus de chaque requête
+4. Utilisez le token JWT obtenu via login pour les requêtes protégées
