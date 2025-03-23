@@ -10,7 +10,7 @@ Ce projet est le backend de mon portfolio personnel, développé avec NestJS et 
 - **Authentification:** JWT (JSON Web Tokens)
 - **Documentation:** Swagger/OpenAPI
 - **Validation:** class-validator et class-transformer
-- **Sécurité:** bcrypt pour le hachage des mots de passe (salt factor 10), rate limiting, validation regex
+- **Sécurité:** bcrypt pour le hachage des mots de passe (salt factor 12), rate limiting, validation regex
 
 ## Structure du Projet
 
@@ -18,11 +18,12 @@ Le projet est organisé autour des entités principales :
 - **Projets:** Gestion des projets du portfolio
 - **Skills:** Liste des technologies maîtrisées
 - **AboutMe:** Informations personnelles et présentation
+- **HeroBanner:** Textes défilants pour la bannière d'accueil
 - **Auth:** Système d'authentification et contrôle d'accès
 
 ## Fonctionnalités
 
-- CRUD complet pour les projets et technologies
+- CRUD complet pour les projets, compétences et textes de la Hero Banner
 - Système d'authentification JWT avec rôle admin
 - Protection contre les attaques par force brute (rate limiting configurable)
 - Validation avancée des données avec expressions régulières
@@ -82,6 +83,13 @@ La documentation complète de l'API est disponible via Swagger UI :
 ### AboutMe
 - `GET /api/about-me` - Obtient les informations "À propos de moi"
 - `PUT /api/about-me` - Met à jour les informations "À propos de moi" (admin)
+
+### Hero Banner
+- `GET /api/herobanner` - Liste tous les textes de la Hero Banner (pagination, filtres)
+- `GET /api/herobanner/:id` - Détails d'un texte
+- `POST /api/herobanner` - Ajoute un nouveau texte (admin)
+- `PUT /api/herobanner/:id` - Met à jour un texte (admin)
+- `DELETE /api/herobanner/:id` - Supprime un texte (admin)
 
 ### Authentification
 - `POST /api/auth/login` - Connexion (avec rate limiting)

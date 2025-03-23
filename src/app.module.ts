@@ -11,6 +11,7 @@ import { SkillsModule } from './skills/skills.module';
 import { AboutMeModule } from './aboutme/aboutme.module';
 import { AuthModule } from './auth/auth.module';
 import { DatabaseModule } from './database/database.module';
+import { HeroBannerModule } from './herobanner/herobanner.module';
 import { AppController } from './app.controller';
 
 /**
@@ -38,6 +39,9 @@ import { AppController } from './app.controller';
     
     /** Module de gestion des compétences */
     SkillsModule,
+    
+    /** Module de gestion des textes de la Hero Banner */
+    HeroBannerModule,
     
     /** Module d'authentification et de sécurité */
     AuthModule,

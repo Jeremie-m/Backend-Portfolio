@@ -1,0 +1,39 @@
+### ============================================================
+### MODULE HERO BANNER
+### ============================================================
+
+### Récupérer tous les textes de la Hero Banner
+GET {{baseUrl}}/herobanner
+
+### Récupérer tous les textes actifs de la Hero Banner
+GET {{baseUrl}}/herobanner?isActive=true
+
+### Rechercher des textes de la Hero Banner contenant "Full"
+GET {{baseUrl}}/herobanner?search=Full
+
+### Récupérer un texte de Hero Banner par son ID
+GET {{baseUrl}}/herobanner/123e4567-e89b-12d3-a456-426614174000
+
+### Créer un nouveau texte de Hero Banner (authentification requise)
+POST {{baseUrl}}/herobanner
+Content-Type: application/json
+Authorization: Bearer {{apiToken}}
+
+{
+  "text": "Nouveau texte pour la Hero Banner",
+  "isActive": true
+}
+
+### Mettre à jour un texte de Hero Banner (authentification requise)
+PUT {{baseUrl}}/herobanner/123e4567-e89b-12d3-a456-426614174000
+Content-Type: application/json
+Authorization: Bearer {{apiToken}}
+
+{
+  "text": "Texte mis à jour pour la Hero Banner",
+  "isActive": false
+}
+
+### Supprimer un texte de Hero Banner (authentification requise)
+DELETE {{baseUrl}}/herobanner/123e4567-e89b-12d3-a456-426614174000
+Authorization: Bearer {{apiToken}} 

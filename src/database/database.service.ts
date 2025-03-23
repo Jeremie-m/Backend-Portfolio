@@ -101,6 +101,16 @@ export class DatabaseService implements OnModuleDestroy {
         updated_at TEXT NOT NULL
       )
     `);
+
+    // Création de la table hero_banner_texts
+    this.db.exec(`
+      CREATE TABLE IF NOT EXISTS hero_banner_texts (
+        id TEXT PRIMARY KEY DEFAULT (uuid()),
+        text TEXT NOT NULL UNIQUE,
+        is_active INTEGER NOT NULL DEFAULT 1,
+        created_at TEXT NOT NULL
+      )
+    `);
   }
 
   private updateTables(): void {    
@@ -142,6 +152,35 @@ Je peux aussi collaborer efficacement avec les équipes créatives grâce à mes
       `).run(defaultAboutMeText);
       
       console.log('Données "À propos de moi" initialisées avec le texte par défaut');
+    }
+
+    // Initialisation des textes de la Hero Banner si aucun n'existe
+    const heroBannerCount = this.db.prepare('SELECT COUNT(*) as count FROM hero_banner_texts').get() as CountResult;
+    
+    if (heroBannerCount.count === 0) {
+      const defaultHeroBannerTexts = [
+        { text: "Développeur Full-Stack", isActive: true },
+        { text: "Prêt pour l'onboarding", isActive: true },
+        { text: "Inscrit sur root-me.org 🏴‍☠️", isActive: true },
+        { text: "Papa Level 1", isActive: true },
+        { text: "Ouvert aux opportunités", isActive: true },
+        { text: "Musicien autodidacte", isActive: true },
+        { text: "En train d'apprendre une nouvelle compétence", isActive: true },
+        { text: "Auteur de mon propre blog", isActive: false },
+        { text: "Le créateur du WarpZone Caen", isActive: true },
+        { text: "Amateur de Geocaching", isActive: true }
+      ];
+      
+      const insertStmt = this.db.prepare(`
+        INSERT INTO hero_banner_texts (id, text, is_active, created_at)
+        VALUES (uuid(), ?, ?, datetime('now'))
+      `);
+      
+      defaultHeroBannerTexts.forEach(item => {
+        insertStmt.run(item.text, item.isActive ? 1 : 0);
+      });
+      
+      console.log('Textes de la Hero Banner initialisés avec les données par défaut');
     }
   }
 

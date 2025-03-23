@@ -30,9 +30,13 @@ export class AuthController {
   @Throttle({ default: { limit: 5, ttl: 60000 } })
   @ApiOperation({ summary: 'Connexion à l\'application' })
   @ApiResponse({
-    status: 200,
+    status: 201,
     description: 'Connexion réussie',
     type: AuthResponseDto
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'Données invalides'
   })
   @ApiResponse({
     status: 401,
