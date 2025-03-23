@@ -1,43 +1,30 @@
 import { Controller, Get } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 
-@ApiTags('Default')
+/**
+ * Contrôleur principal de l'application
+ * Gère les routes racines et de base de l'API
+ */
+@ApiTags('App')
 @Controller()
 export class AppController {
+  /**
+   * Route racine de l'application
+   * @returns Un message de bienvenue simple
+   */
   @Get()
-  @ApiOperation({ summary: 'Page d\'accueil' })
+  @ApiOperation({ summary: 'Page d\'accueil de l\'API' })
   @ApiResponse({
     status: 200,
-    description: 'Informations sur l\'API et ses endpoints',
+    description: 'Message de bienvenue',
     schema: {
       type: 'object',
       properties: {
-        name: { type: 'string', example: 'Portfolio API' },
-        version: { type: 'string', example: '1.0.0' },
-        description: { type: 'string' },
-        documentation: { type: 'string' },
-        endpoints: {
-          type: 'object',
-          properties: {
-            projects: { type: 'string' },
-            blog: { type: 'string' },
-            technologies: { type: 'string' }
-          }
-        }
+        message: { type: 'string' }
       }
     }
   })
-  getRoot() {
-    return {
-      name: 'Portfolio API',
-      version: '1.0.0',
-      description: 'API pour le portfolio personnel',
-      documentation: '/docs',
-      endpoints: {
-        projects: '/api/projects',
-        blog: '/api/blog',
-        technologies: '/api/technologies'
-      }
-    };
+  getHello(): { message: string } {
+    return { message: 'Bienvenue sur l\'API du Portfolio!' };
   }
 } 

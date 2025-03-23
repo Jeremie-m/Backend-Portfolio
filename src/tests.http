@@ -1,0 +1,116 @@
+### Configuration des variables
+@baseUrl = http://localhost:3001/api
+@apiToken = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIwMTE0NjE0ZS1mYzJkLTQ0NzAtYTM2Zi1kMWJhNmY5OWFmNDgiLCJlbWFpbCI6ImFkbWluQGV4YW1wbGUuY29tIiwicm9sZSI6ImFkbWluIiwiaWF0IjoxNzQyNzI1MzQyLCJleHAiOjE3NDI3Mjg5NDJ9.hzxtNH7SqDJxdolWHVJ6Bj2Mm__gxIwz30fy0ysoNPc
+
+### ============================================================
+### MODULE AUTHENTIFICATION
+### ============================================================
+
+### Connexion (login)
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "admin@example.com",
+  "password": "P@ssw0rd123!"
+}
+
+### ============================================================
+### MODULE PROJETS
+### ============================================================
+
+### Récupérer tous les projets (sans filtres)
+GET {{baseUrl}}/projects
+
+### Récupérer les projets avec pagination
+GET {{baseUrl}}/projects?page=1&limit=10
+
+### Recherche de projets
+GET {{baseUrl}}/projects?search=portfolio&sort=desc
+
+### Récupérer un projet par son ID
+GET {{baseUrl}}/projects/123e4567-e89b-12d3-a456-426614174000
+
+### Créer un nouveau projet (authentification requise)
+POST {{baseUrl}}/projects
+Content-Type: application/json
+Authorization: Bearer {{apiToken}}
+
+{
+  "title": "Portfolio Personnel",
+  "description": "Un portfolio développé avec NestJS et Vue.js",
+  "skills": ["Node.js", "TypeScript", "Vue.js"],
+  "github_link": "https://github.com/username/portfolio",
+  "demo_link": "https://portfolio.exemple.fr",
+  "category": "Web Development",
+  "image_url": "https://example.com/images/portfolio.jpg"
+}
+
+### Mettre à jour un projet (authentification requise)
+PUT {{baseUrl}}/projects/aad1cf27-22f6-4602-97fd-fce598ce0c12
+Content-Type: application/json
+Authorization: Bearer {{apiToken}}
+
+{
+  "title": "Portfolio Personnel v2",
+  "description": "Version améliorée de mon portfolio"
+}
+
+### Supprimer un projet (authentification requise)
+DELETE {{baseUrl}}/projects/aad1cf27-22f6-4602-97fd-fce598ce0c12
+Authorization: Bearer {{apiToken}}
+
+### ============================================================
+### MODULE COMPÉTENCES
+### ============================================================
+
+### Récupérer toutes les compétences
+GET {{baseUrl}}/skills
+
+### Récupérer les compétences avec pagination et filtrage
+GET {{baseUrl}}/skills?page=1&limit=20&category=Frontend&search=react
+
+### Récupérer une compétence par son ID
+GET {{baseUrl}}/skills/123e4567-e89b-12d3-a456-426614174000
+
+### Créer une nouvelle compétence (authentification requise)
+POST {{baseUrl}}/skills
+Content-Type: application/json
+Authorization: Bearer {{apiToken}}
+
+{
+  "name": "React",
+  "category": "Frontend Framework",
+  "description": "Une bibliothèque JavaScript pour créer des interfaces utilisateurs",
+  "image_url": "https://example.com/react-logo.png"
+}
+
+### Mettre à jour une compétence (authentification requise)
+PUT {{baseUrl}}/skills/05466adf-fd6f-4e68-be07-6d08e7f88904
+Content-Type: application/json
+Authorization: Bearer {{apiToken}}
+
+{
+  "description": "La bibliothèque JavaScript la plus populaire pour construire des interfaces utilisateur",
+  "image_url": "https://example.com/react-logo-updated.png"
+}
+
+### Supprimer une compétence (authentification requise)
+DELETE {{baseUrl}}/skills/05466adf-fd6f-4e68-be07-6d08e7f88904
+Authorization: Bearer {{apiToken}}
+
+### ============================================================
+### MODULE ABOUT ME
+### ============================================================
+
+### Récupérer les informations "À propos de moi"
+GET {{baseUrl}}/about-me
+
+### Mettre à jour les informations "À propos de moi" (authentification requise)
+PUT {{baseUrl}}/about-me
+Content-Type: application/json
+Authorization: Bearer {{apiToken}}
+
+{
+  "text": "Développeur Full Stack passionné de technologies web modernes. J'adore créer des applications performantes et intuitives avec TypeScript, Node.js et Vue.js."
+}

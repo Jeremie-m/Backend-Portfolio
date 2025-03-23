@@ -1,15 +1,31 @@
-import { Controller, Post, Body } from '@nestjs/common';
+/**
+ * @fileoverview Contrôleur gérant les routes d'authentification de l'application.
+ */
+
+import { Controller, Post, Body, UseGuards } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
 import { LoginDto } from './dto/login.dto';
 import { AuthResponseDto } from './dto/auth-response.dto';
 import { AuthService } from './auth.service';
 
+/**
+ * Contrôleur gérant les opérations d'authentification comme la connexion
+ */
 @ApiTags('Authentication')
 @Controller('auth')
 export class AuthController {
-  constructor(private readonly authService: AuthService) {}
+  /**
+   * @param authService Service d'authentification
+   */
+  constructor(private authService: AuthService) {}
 
+  /**
+   * Gère la connexion d'un utilisateur
+   * @param loginDto Données d'identification de l'utilisateur
+   * @returns Informations d'authentification avec token JWT
+   * @throws UnauthorizedException Si les identifiants sont incorrects
+   */
   @Post('login')
   @Throttle({ default: { limit: 5, ttl: 60000 } })
   @ApiOperation({ summary: 'Connexion à l\'application' })

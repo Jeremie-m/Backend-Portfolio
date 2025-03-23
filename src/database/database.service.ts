@@ -1,24 +1,29 @@
 import { Injectable, OnModuleDestroy } from '@nestjs/common';
-import * as Database from 'better-sqlite3';
+import Database from 'better-sqlite3';
 import * as path from 'path';
 import * as crypto from 'crypto';
 import * as fs from 'fs';
+import * as bcrypt from 'bcrypt';
+
+interface CountResult {
+  count: number;
+}
 
 @Injectable()
 export class DatabaseService implements OnModuleDestroy {
-  private db: Database.Database;
+  private db: Database.Database | null = null;
 
   constructor() {
     this.initializeDatabase();
   }
 
-  async onModuleDestroy() {
+  async onModuleDestroy(): Promise<void> {
     if (this.db) {
       this.db.close();
     }
   }
 
-  private initializeDatabase() {
+  private initializeDatabase(): void {
     try {
       // Créer le dossier data s'il n'existe pas
       const dataDir = path.join(process.cwd(), 'data');
@@ -47,108 +52,103 @@ export class DatabaseService implements OnModuleDestroy {
     }
   }
 
-  private createTables() {
+  private createTables(): void {
+    if (!this.db) return;
+
     // Création de la table projects
     this.db.exec(`
       CREATE TABLE IF NOT EXISTS projects (
-        id TEXT PRIMARY KEY DEFAULT (uuid()),
-        title TEXT NOT NULL,
+        id TEXT PRIMARY KEY,
+        title TEXT NOT NULL UNIQUE,
         description TEXT,
-        technologies TEXT,
+        skills TEXT,
         github_link TEXT,
         demo_link TEXT,
         category TEXT,
         image_url TEXT,
-        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        created_at TEXT NOT NULL
       )
     `);
 
-    // Création de la table blog_posts
+    // Création de la table skills
     this.db.exec(`
-      CREATE TABLE IF NOT EXISTS blog_posts (
-        id TEXT PRIMARY KEY DEFAULT (uuid()),
-        title TEXT NOT NULL,
-        content TEXT NOT NULL,
-        publication_date DATETIME DEFAULT CURRENT_TIMESTAMP,
-        tags TEXT,
-        meta_description TEXT,
-        image_url TEXT
-      )
-    `);
-
-    // Création de la table technologies
-    this.db.exec(`
-      CREATE TABLE IF NOT EXISTS technologies (
-        id TEXT PRIMARY KEY DEFAULT (uuid()),
-        name TEXT NOT NULL,
+      CREATE TABLE IF NOT EXISTS skills (
+        id TEXT PRIMARY KEY,
+        name TEXT NOT NULL UNIQUE,
         category TEXT,
         description TEXT,
         image_url TEXT,
-        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        created_at TEXT NOT NULL
       )
     `);
 
-    // Création de la table tags
+    // Création de la table des utilisateurs
     this.db.exec(`
-      CREATE TABLE IF NOT EXISTS tags (
+      CREATE TABLE IF NOT EXISTS users (
         id TEXT PRIMARY KEY DEFAULT (uuid()),
-        name TEXT NOT NULL UNIQUE,
+        email TEXT UNIQUE NOT NULL,
+        password TEXT NOT NULL,
+        role TEXT CHECK(role IN ('admin', 'user')) NOT NULL DEFAULT 'user',
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP
       )
     `);
 
-    // Création de la table de relation post_tags
+    // Création de la table about_me
     this.db.exec(`
-      CREATE TABLE IF NOT EXISTS post_tags (
-        post_id TEXT,
-        tag_id TEXT,
-        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-        FOREIGN KEY (post_id) REFERENCES blog_posts(id) ON DELETE CASCADE,
-        FOREIGN KEY (tag_id) REFERENCES tags(id) ON DELETE CASCADE,
-        PRIMARY KEY (post_id, tag_id)
+      CREATE TABLE IF NOT EXISTS about_me (
+        id TEXT PRIMARY KEY,
+        text TEXT NOT NULL,
+        updated_at TEXT NOT NULL
       )
     `);
   }
 
-  private updateTables() {
-    // Vérifier si la colonne created_at existe dans la table projects
-    const result = this.db.prepare(`
-      SELECT COUNT(*) as count 
-      FROM pragma_table_info('projects') 
-      WHERE name = 'created_at'
-    `).get() as { count: number };
+  private updateTables(): void {    
+    if (!this.db) return;
 
-    // Si la colonne n'existe pas, l'ajouter et initialiser les valeurs
-    if (!result.count) {
-      // Créer une table temporaire avec la nouvelle structure
-      this.db.exec(`
-        CREATE TABLE projects_new (
-          id TEXT PRIMARY KEY DEFAULT (uuid()),
-          title TEXT NOT NULL,
-          description TEXT,
-          technologies TEXT,
-          github_link TEXT,
-          demo_link TEXT,
-          category TEXT,
-          image_url TEXT,
-          created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-        );
+    // Créer un administrateur par défaut si aucun n'existe
+    const adminCount = this.db.prepare('SELECT COUNT(*) as count FROM users WHERE role = ?').get('admin') as CountResult;
+    
+    if (adminCount.count === 0) {
+      const adminEmail = process.env.ADMIN_EMAIL || 'admin@example.com';
+      const adminPassword = process.env.ADMIN_PASSWORD || 'P@ssw0rd123!';
+      const hashedPassword = bcrypt.hashSync(adminPassword, 12); // Augmentation du salt à 12 pour plus de sécurité
+      
+      this.db.prepare(`
+        INSERT INTO users (id, email, password, role, created_at)
+        VALUES (uuid(), ?, ?, 'admin', datetime('now'))
+      `).run(adminEmail, hashedPassword);
+      
+      console.log('Utilisateur administrateur créé avec les identifiants par défaut');
+    }
 
-        -- Copier les données existantes avec la date actuelle
-        INSERT INTO projects_new (id, title, description, technologies, github_link, demo_link, category, image_url, created_at)
-        SELECT id, title, description, technologies, github_link, demo_link, category, image_url, CURRENT_TIMESTAMP
-        FROM projects;
+    // Initialisation des données "À propos de moi" si aucune n'existe
+    const aboutMeCount = this.db.prepare('SELECT COUNT(*) as count FROM about_me').get() as CountResult;
+    
+    if (aboutMeCount.count === 0) {
+      const defaultAboutMeText = `Passionné par les nouvelles technologies, j'ai débuté ma vie professionnelle en tant que technicien informatique, avant d'innover et de faire naître le premier bar eSport de Normandie, le WarpZone.
 
-        -- Supprimer l'ancienne table
-        DROP TABLE projects;
+Cette expérience unique et entrepreneuriale m'a appris à jongler avec plusieurs casquettes et à faire preuve d'une grande adaptation, et ce durant sept belles années.
 
-        -- Renommer la nouvelle table
-        ALTER TABLE projects_new RENAME TO projects;
-      `);
+Fort de cette aventure, j'ai décidé de quitter le monde de la nuit pour me réorienter vers le développement web.
+
+Aujourd'hui, en tant que développeur full-stack junior, je me suis familiarisé avec le front-end (HTML, CSS, Tailwind, React et Next.js) ainsi qu'avec le back-end (Node.js, Express, Nest.js, MongoDB, PostgreSQL).
+
+Je peux aussi collaborer efficacement avec les équipes créatives grâce à mes compétences en Photoshop et Figma.`;
+      
+      this.db.prepare(`
+        INSERT INTO about_me (id, text, updated_at)
+        VALUES (uuid(), ?, datetime('now'))
+      `).run(defaultAboutMeText);
+      
+      console.log('Données "À propos de moi" initialisées avec le texte par défaut');
     }
   }
 
   getDatabase(): Database.Database {
+    if (!this.db) {
+      throw new Error('La base de données n\'est pas initialisée');
+    }
     return this.db;
   }
 } 

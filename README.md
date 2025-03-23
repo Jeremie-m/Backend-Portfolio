@@ -13,18 +13,18 @@ Ce projet est le backend de mon portfolio personnel, développé avec NestJS et 
 
 ## Structure du Projet
 
-Le projet est organisé autour de trois entités principales :
+Le projet est organisé autour des entités principales :
 - **Projets:** Gestion des projets du portfolio
-- **Blog:** Système de blog avec articles et tags
-- **Technologies:** Liste des technologies maîtrisées
+- **Skills:** Liste des technologies maîtrisées
+- **AboutMe:** Informations personnelles et présentation
 
 ## Fonctionnalités
 
-- CRUD complet pour les projets, articles de blog et technologies
+- CRUD complet pour les projets et technologies
 - Système d'authentification JWT avec rôle admin
 - Protection contre les attaques par force brute (rate limiting)
 - Pagination et filtres pour toutes les listes
-- Gestion des tags pour les articles de blog
+- Gestion du contenu "À propos de moi"
 - Documentation API interactive avec Swagger
 
 ## Installation
@@ -54,7 +54,7 @@ npm run start:dev
 ## Documentation API
 
 La documentation complète de l'API est disponible via Swagger UI :
-- En développement : http://localhost:3000/docs
+- En développement : http://localhost:3001/docs
 - En production : http://votre-domaine.com/docs
 
 ## API Routes
@@ -66,26 +66,23 @@ La documentation complète de l'API est disponible via Swagger UI :
 - `PUT /api/projects/:id` - Met à jour un projet (admin)
 - `DELETE /api/projects/:id` - Supprime un projet (admin)
 
-### Blog
-- `GET /api/blog` - Liste tous les articles (pagination, filtres, tags)
-- `GET /api/blog/:id` - Détails d'un article
-- `POST /api/blog` - Crée un nouvel article (admin)
-- `PUT /api/blog/:id` - Met à jour un article (admin)
-- `DELETE /api/blog/:id` - Supprime un article (admin)
+### Skills
+- `GET /api/skills` - Liste tous les skills (pagination, filtres, tri)
+- `GET /api/skills/:id` - Détails d'une technologie
+- `POST /api/skills` - Ajoute une nouvelle technologie (admin)
+- `PUT /api/skills/:id` - Met à jour une technologie (admin)
+- `DELETE /api/skills/:id` - Supprime une technologie (admin)
 
-### Technologies
-- `GET /api/technologies` - Liste toutes les technologies (pagination, filtres, tri)
-- `GET /api/technologies/:id` - Détails d'une technologie
-- `POST /api/technologies` - Ajoute une nouvelle technologie (admin)
-- `PUT /api/technologies/:id` - Met à jour une technologie (admin)
-- `DELETE /api/technologies/:id` - Supprime une technologie (admin)
+### AboutMe
+- `GET /api/aboutme` - Obtient les informations "À propos de moi"
+- `PUT /api/aboutme` - Met à jour les informations "À propos de moi" (admin)
 
 ### Authentification
 - `POST /api/auth/login` - Connexion (avec rate limiting)
 
 ## Sécurité
 
-- Authentification requise pour toutes les opérations de modification
+- Authentification requise pour toutes les opérations POST PUT DELETE
 - Rate limiting sur la route de login (5 tentatives par minute)
 - Validation des données entrantes
 - Hachage des mots de passe avec bcrypt

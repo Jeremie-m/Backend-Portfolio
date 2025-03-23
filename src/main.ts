@@ -1,3 +1,4 @@
+import 'reflect-metadata';
 import { NestFactory } from '@nestjs/core';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { AppModule } from './app.module';
@@ -39,8 +40,8 @@ async function bootstrap() {
     useGlobalPrefix: true // Utiliser le préfixe global
   });
 
-  // Utiliser le port depuis l'environnement ou 3000 par défaut
-  const port = process.env.PORT || 3000;
+  // Utiliser le port depuis l'environnement ou 3001 par défaut
+  const port = process.env.PORT || 3001;
   await app.listen(port);
   console.log(`Application is running on: http://localhost:${port}`);
 }

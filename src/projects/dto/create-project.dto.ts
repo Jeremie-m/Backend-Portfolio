@@ -1,65 +1,99 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsString, IsUrl, IsOptional } from 'class-validator';
+import { IsNotEmpty, IsString, IsOptional, IsUrl, IsArray } from 'class-validator';
+import { Type } from 'class-transformer';
 
+/**
+ * DTO pour la création d'un nouveau projet
+ */
 export class CreateProjectDto {
-  @ApiProperty({
-    description: 'Le titre du projet',
-    example: 'Mon nouveau projet'
+  /**
+   * Titre du projet
+   * @example Nouveau portfolio
+   */
+  @ApiProperty({ 
+    description: 'Titre du projet',
+    example: 'Nouveau portfolio'
   })
+  @IsNotEmpty()
   @IsString()
   title: string;
 
-  @ApiProperty({
-    description: 'Description détaillée du projet',
-    example: 'Ce projet est une application web qui...',
-    required: false
+  /**
+   * Description détaillée du projet
+   * @example Un portfolio moderne utilisant les dernières technologies
+   */
+  @ApiProperty({ 
+    description: 'Description détaillée du projet', 
+    required: false,
+    example: 'Un portfolio moderne utilisant les dernières technologies'
   })
-  @IsString()
   @IsOptional()
+  @IsString()
   description?: string;
 
-  @ApiProperty({
-    description: 'Technologies utilisées dans le projet',
-    example: 'React, Node.js, MongoDB',
-    required: false
+  /**
+   * Compétences utilisées dans le projet
+   * @example ["React", "TypeScript", "NestJS"]
+   */
+  @ApiProperty({ 
+    description: 'Compétences utilisées dans le projet', 
+    required: false,
+    type: [String],
+    example: ['React', 'TypeScript', 'NestJS']
   })
-  @IsString()
   @IsOptional()
-  technologies?: string;
+  @IsArray()
+  skills?: string[];
 
-  @ApiProperty({
-    description: 'Lien vers le dépôt GitHub du projet',
-    example: 'https://github.com/username/project',
-    required: false
+  /**
+   * Lien vers le repository GitHub
+   * @example https://github.com/username/portfolio
+   */
+  @ApiProperty({ 
+    description: 'Lien vers le repository GitHub', 
+    required: false,
+    example: 'https://github.com/username/portfolio'
   })
-  @IsUrl()
   @IsOptional()
+  @IsUrl()
   github_link?: string;
 
-  @ApiProperty({
-    description: 'Lien vers la démo du projet',
-    example: 'https://my-project.herokuapp.com',
-    required: false
+  /**
+   * Lien vers la démo du projet
+   * @example https://mon-portfolio.com
+   */
+  @ApiProperty({ 
+    description: 'Lien vers la démo du projet', 
+    required: false,
+    example: 'https://mon-portfolio.com'
   })
-  @IsUrl()
   @IsOptional()
+  @IsUrl()
   demo_link?: string;
 
-  @ApiProperty({
-    description: 'Catégorie du projet',
-    example: 'Web Development',
-    required: false
+  /**
+   * Catégorie du projet
+   * @example Front-end
+   */
+  @ApiProperty({ 
+    description: 'Catégorie du projet', 
+    required: false,
+    example: 'Front-end'
   })
-  @IsString()
   @IsOptional()
+  @IsString()
   category?: string;
 
-  @ApiProperty({
-    description: 'URL de l\'image du projet',
-    example: 'https://example.com/image.jpg',
-    required: false
+  /**
+   * URL de l'image du projet
+   * @example https://mon-portfolio.com/images/projet1.jpg
+   */
+  @ApiProperty({ 
+    description: 'URL de l\'image du projet', 
+    required: false,
+    example: 'https://mon-portfolio.com/images/projet1.jpg'
   })
-  @IsUrl()
   @IsOptional()
+  @IsUrl()
   image_url?: string;
 } 
