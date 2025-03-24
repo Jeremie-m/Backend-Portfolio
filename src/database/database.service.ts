@@ -59,12 +59,12 @@ export class DatabaseService implements OnModuleDestroy {
     this.db.exec(`
       CREATE TABLE IF NOT EXISTS projects (
         id TEXT PRIMARY KEY,
+        "order" INTEGER NOT NULL,
         title TEXT NOT NULL UNIQUE,
-        description TEXT,
-        skills TEXT,
+        description TEXT NOT NULL,
+        skills TEXT NOT NULL,
         github_link TEXT,
         demo_link TEXT,
-        category TEXT,
         image_url TEXT,
         created_at TEXT NOT NULL
       )
@@ -74,11 +74,9 @@ export class DatabaseService implements OnModuleDestroy {
     this.db.exec(`
       CREATE TABLE IF NOT EXISTS skills (
         id TEXT PRIMARY KEY,
-        name TEXT NOT NULL UNIQUE,
-        category TEXT,
-        description TEXT,
-        image_url TEXT,
-        created_at TEXT NOT NULL
+        "order" INTEGER NOT NULL,
+        name TEXT UNIQUE NOT NULL,
+        image_url TEXT
       )
     `);
 
@@ -106,6 +104,7 @@ export class DatabaseService implements OnModuleDestroy {
     this.db.exec(`
       CREATE TABLE IF NOT EXISTS hero_banner_texts (
         id TEXT PRIMARY KEY DEFAULT (uuid()),
+        "order" INTEGER NOT NULL,
         text TEXT NOT NULL UNIQUE,
         is_active INTEGER NOT NULL DEFAULT 1,
         created_at TEXT NOT NULL
@@ -122,7 +121,7 @@ export class DatabaseService implements OnModuleDestroy {
     if (adminCount.count === 0) {
       const adminEmail = process.env.ADMIN_EMAIL || 'admin@example.com';
       const adminPassword = process.env.ADMIN_PASSWORD || 'P@ssw0rd123!';
-      const hashedPassword = bcrypt.hashSync(adminPassword, 12); // Augmentation du salt à 12 pour plus de sécurité
+      const hashedPassword = bcrypt.hashSync(adminPassword, 12);
       
       this.db.prepare(`
         INSERT INTO users (id, email, password, role, created_at)
@@ -130,6 +129,38 @@ export class DatabaseService implements OnModuleDestroy {
       `).run(adminEmail, hashedPassword);
       
       console.log('Utilisateur administrateur créé avec les identifiants par défaut');
+    }
+
+    // Initialisation des compétences si aucune n'existe
+    const skillsCount = this.db.prepare('SELECT COUNT(*) as count FROM skills').get() as CountResult;
+    
+    if (skillsCount.count === 0) {
+      const defaultSkills = [
+        { name: "HTML", image_url: "/images/skills/html.svg", order: 1 },
+        { name: "CSS", image_url: "/images/skills/css.svg", order: 2 },
+        { name: "JavaScript", image_url: "/images/skills/js.svg", order: 3 },
+        { name: "Tailwind", image_url: "/images/skills/tailwind.svg", order: 4 },
+        { name: "React", image_url: "/images/skills/react.svg", order: 5 },
+        { name: "Node.js", image_url: "/images/skills/node.svg", order: 6 },
+        { name: "Nest.js", image_url: "/images/skills/nestjs.svg", order: 7 },
+        { name: "PostgreSQL", image_url: "/images/skills/postgresql.svg", order: 8 },
+        { name: "MongoDB", image_url: "/images/skills/mongodb.svg", order: 9 },
+        { name: "Git", image_url: "/images/skills/git.svg", order: 10 },
+        { name: "Wave", image_url: "/images/skills/wave.svg", order: 11 },
+        { name: "Lighthouse", image_url: "/images/skills/lighthouse.svg", order: 12 },
+        { name: "Python", image_url: "/images/skills/python.svg", order: 13 }
+      ];
+      
+      const insertStmt = this.db.prepare(`
+        INSERT INTO skills (id, "order", name, image_url)
+        VALUES (uuid(), ?, ?, ?)
+      `);
+      
+      defaultSkills.forEach(skill => {
+        insertStmt.run(skill.order, skill.name, skill.image_url);
+      });
+      
+      console.log('Compétences initialisées avec les données par défaut');
     }
 
     // Initialisation des données "À propos de moi" si aucune n'existe
@@ -159,30 +190,32 @@ Je peux aussi collaborer efficacement avec les équipes créatives grâce à mes
     
     if (heroBannerCount.count === 0) {
       const defaultHeroBannerTexts = [
-        { text: "Développeur Full-Stack", isActive: true },
-        { text: "Prêt pour l'onboarding", isActive: true },
-        { text: "Inscrit sur root-me.org 🏴‍☠️", isActive: true },
-        { text: "Papa Level 1", isActive: true },
-        { text: "Ouvert aux opportunités", isActive: true },
-        { text: "Musicien autodidacte", isActive: true },
-        { text: "En train d'apprendre une nouvelle compétence", isActive: true },
-        { text: "Auteur de mon propre blog", isActive: false },
-        { text: "Le créateur du WarpZone Caen", isActive: true },
-        { text: "Amateur de Geocaching", isActive: true }
+        { text: "Développeur Full-Stack", isActive: true, order: 1 },
+        { text: "Prêt pour l'onboarding", isActive: true, order: 2 },
+        { text: "Inscrit sur root-me.org 🏴‍☠️", isActive: true, order: 3 },
+        { text: "Papa Level 1", isActive: true, order: 4 },
+        { text: "Ouvert aux opportunités", isActive: true, order: 5 },
+        { text: "Musicien autodidacte", isActive: true, order: 6 },
+        { text: "En train d'apprendre une nouvelle compétence", isActive: true, order: 7 },
+        { text: "Auteur de mon propre blog", isActive: false, order: 8 },
+        { text: "Le créateur du WarpZone Caen", isActive: true, order: 9 },
+        { text: "Amateur de Geocaching", isActive: true, order: 10 }
       ];
       
       const insertStmt = this.db.prepare(`
-        INSERT INTO hero_banner_texts (id, text, is_active, created_at)
-        VALUES (uuid(), ?, ?, datetime('now'))
+        INSERT INTO hero_banner_texts (id, "order", text, is_active, created_at)
+        VALUES (uuid(), ?, ?, ?, datetime('now'))
       `);
       
       defaultHeroBannerTexts.forEach(item => {
-        insertStmt.run(item.text, item.isActive ? 1 : 0);
+        insertStmt.run(item.order, item.text, item.isActive ? 1 : 0);
       });
       
       console.log('Textes de la Hero Banner initialisés avec les données par défaut');
     }
   }
+
+  
 
   getDatabase(): Database.Database {
     if (!this.db) {

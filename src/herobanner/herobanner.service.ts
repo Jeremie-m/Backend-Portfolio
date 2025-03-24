@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
 import { DatabaseService } from '../database/database.service';
 import * as crypto from 'crypto';
 import { 
@@ -6,16 +6,17 @@ import {
   HeroBannerAlreadyExistsException, 
   InvalidHeroBannerDataException 
 } from './exceptions/herobanner.exceptions';
-import { HeroBannerDto } from './dto/herobanner.dto';
-import { CreateHeroBannerDto } from './dto/create-herobanner.dto';
-import { UpdateHeroBannerDto } from './dto/update-herobanner.dto';
-import { FindHeroBannerDto } from './dto/find-herobanner.dto';
+import { HeroBannerTextDto } from './dto/hero-banner-text.dto';
+import { CreateHeroBannerTextDto } from './dto/create-hero-banner-text.dto';
+import { UpdateHeroBannerTextDto } from './dto/update-hero-banner-text.dto';
+import { FindHeroBannerDto } from './dto/find-hero-banner-text.dto';
 
 /**
  * Interface pour les données brutes d'un texte de Hero Banner en base de données
  */
 interface HeroBannerEntity {
   id: string;
+  order: number;
   text: string;
   is_active: number; // 1 = true, 0 = false en SQLite
   created_at: string;
@@ -44,7 +45,7 @@ export class HeroBannerService {
    * @param query Paramètres de filtrage et pagination
    * @returns Liste paginée des textes de Hero Banner
    */
-  async findAll(query: FindHeroBannerDto): Promise<PaginatedResult<HeroBannerDto>> {
+  async findAll(query: FindHeroBannerDto): Promise<PaginatedResult<HeroBannerTextDto>> {
     const db = this.databaseService.getDatabase();
     
     // Construction de la requête SQL dynamique
@@ -75,7 +76,7 @@ export class HeroBannerService {
     const totalCount = countStmt.get(...params) as { count: number };
 
     // Ajout de la pagination à la requête
-    sqlQuery += ' ORDER BY created_at DESC LIMIT ? OFFSET ?';
+    sqlQuery += ' ORDER BY "order" ASC LIMIT ? OFFSET ?';
     params.push(limit, offset);
 
     // Exécution de la requête paginée
@@ -84,7 +85,7 @@ export class HeroBannerService {
 
     // Transformation des entités en DTOs
     return {
-      data: rows.map(row => this.mapEntityToDto(row)),
+      data: rows.map(row => this.mapEntityToDtoText(row)),
       total: totalCount.count
     };
   }
@@ -95,7 +96,7 @@ export class HeroBannerService {
    * @returns Le texte de Hero Banner trouvé
    * @throws HeroBannerNotFoundException si le texte n'est pas trouvé
    */
-  async findOne(id: string): Promise<HeroBannerDto> {
+  async findOne(id: string): Promise<HeroBannerTextDto> {
     const db = this.databaseService.getDatabase();
     const stmt = db.prepare('SELECT * FROM hero_banner_texts WHERE id = ?');
     const result = stmt.get(id) as HeroBannerEntity | undefined;
@@ -104,106 +105,107 @@ export class HeroBannerService {
       throw new HeroBannerNotFoundException(id);
     }
 
-    return this.mapEntityToDto(result);
+    return this.mapEntityToDtoText(result);
   }
 
   /**
    * Crée un nouveau texte de Hero Banner
-   * @param createHeroBannerDto Données du texte à créer
+   * @param createHeroBannerTextDto Données du texte à créer
    * @returns Le texte de Hero Banner créé
    * @throws HeroBannerAlreadyExistsException si un texte avec le même contenu existe déjà
    */
-  async create(createHeroBannerDto: CreateHeroBannerDto): Promise<HeroBannerDto> {
+  async create(createHeroBannerTextDto: CreateHeroBannerTextDto): Promise<HeroBannerTextDto> {
     const db = this.databaseService.getDatabase();
 
     // Vérification si un texte similaire existe déjà
     const existingStmt = db.prepare('SELECT * FROM hero_banner_texts WHERE text = ?');
-    const existing = existingStmt.get(createHeroBannerDto.text);
+    const existing = existingStmt.get(createHeroBannerTextDto.text);
 
     if (existing) {
-      throw new HeroBannerAlreadyExistsException(createHeroBannerDto.text);
+      throw new HeroBannerAlreadyExistsException(createHeroBannerTextDto.text);
     }
 
-    const id = crypto.randomUUID();
-    const isActive = createHeroBannerDto.isActive !== undefined ? createHeroBannerDto.isActive : true;
-    const now = new Date().toISOString();
+    // Récupère l'ordre maximum actuel
+    const maxOrderStmt = db.prepare('SELECT MAX("order") as maxOrder FROM hero_banner_texts');
+    const maxOrder = (maxOrderStmt.get() as { maxOrder: number | null })?.maxOrder || 0;
+
+    const newText: HeroBannerEntity = {
+      id: crypto.randomUUID(),
+      order: maxOrder + 1,
+      text: createHeroBannerTextDto.text,
+      is_active: createHeroBannerTextDto.is_active ? 1 : 0,
+      created_at: new Date().toISOString()
+    };
 
     const insertStmt = db.prepare(`
-      INSERT INTO hero_banner_texts (id, text, is_active, created_at)
-      VALUES (?, ?, ?, ?)
+      INSERT INTO hero_banner_texts (id, "order", text, is_active, created_at)
+      VALUES (?, ?, ?, ?, ?)
     `);
 
     try {
-      insertStmt.run(id, createHeroBannerDto.text, isActive ? 1 : 0, now);
+      insertStmt.run(newText.id, newText.order, newText.text, newText.is_active, newText.created_at);
     } catch (error) {
       throw new InvalidHeroBannerDataException(`Erreur lors de la création du texte: ${error.message}`);
     }
 
-    return {
-      id,
-      text: createHeroBannerDto.text,
-      isActive,
-      created_at: now
-    };
+    return this.mapEntityToDtoText(newText);
   }
 
   /**
    * Met à jour un texte de Hero Banner existant
    * @param id ID du texte à mettre à jour
-   * @param updateHeroBannerDto Données de mise à jour
+   * @param updateHeroBannerTextDto Données de mise à jour
    * @returns Le texte de Hero Banner mis à jour
    * @throws HeroBannerNotFoundException si le texte n'est pas trouvé
    * @throws HeroBannerAlreadyExistsException si le nouveau texte est déjà utilisé par un autre élément
    */
-  async update(id: string, updateHeroBannerDto: UpdateHeroBannerDto): Promise<HeroBannerDto> {
+  async update(id: string, updateHeroBannerTextDto: UpdateHeroBannerTextDto): Promise<HeroBannerTextDto> {
     const db = this.databaseService.getDatabase();
+    const existingText = await this.findOne(id);
 
-    // Vérification de l'existence du texte
-    const existingStmt = db.prepare('SELECT * FROM hero_banner_texts WHERE id = ?');
-    const existing = existingStmt.get(id) as HeroBannerEntity | undefined;
+    if (updateHeroBannerTextDto.order !== undefined) {
+      const currentOrder = existingText.order;
+      const newOrder = updateHeroBannerTextDto.order;
 
-    if (!existing) {
-      throw new HeroBannerNotFoundException(id);
-    }
-
-    // Vérification si le nouveau texte est déjà utilisé par un autre élément
-    if (updateHeroBannerDto.text) {
-      const textCheckStmt = db.prepare('SELECT * FROM hero_banner_texts WHERE text = ? AND id != ?');
-      const textExists = textCheckStmt.get(updateHeroBannerDto.text, id);
-
-      if (textExists) {
-        throw new HeroBannerAlreadyExistsException(updateHeroBannerDto.text);
+      if (newOrder !== currentOrder) {
+        if (newOrder > currentOrder) {
+          // Déplace les textes vers le bas
+          db.prepare('UPDATE hero_banner_texts SET "order" = "order" - 1 WHERE "order" > ? AND "order" <= ?')
+            .run(currentOrder, newOrder);
+        } else {
+          // Déplace les textes vers le haut
+          db.prepare('UPDATE hero_banner_texts SET "order" = "order" + 1 WHERE "order" >= ? AND "order" < ?')
+            .run(newOrder, currentOrder);
+        }
       }
     }
 
-    // Construction de la requête de mise à jour
-    let updateQuery = 'UPDATE hero_banner_texts SET';
-    const updateParams: any[] = [];
-    let needsComma = false;
+    // Vérification si le nouveau texte est déjà utilisé par un autre élément
+    if (updateHeroBannerTextDto.text) {
+      const textCheckStmt = db.prepare('SELECT * FROM hero_banner_texts WHERE text = ? AND id != ?');
+      const textExists = textCheckStmt.get(updateHeroBannerTextDto.text, id);
 
-    if (updateHeroBannerDto.text !== undefined) {
-      updateQuery += ' text = ?';
-      updateParams.push(updateHeroBannerDto.text);
-      needsComma = true;
+      if (textExists) {
+        throw new HeroBannerAlreadyExistsException(updateHeroBannerTextDto.text);
+      }
     }
 
-    if (updateHeroBannerDto.isActive !== undefined) {
-      if (needsComma) updateQuery += ',';
-      updateQuery += ' is_active = ?';
-      updateParams.push(updateHeroBannerDto.isActive ? 1 : 0);
-    }
+    const updateQuery = db.prepare(`
+      UPDATE hero_banner_texts
+      SET
+        "order" = COALESCE(?, "order"),
+        text = COALESCE(?, text),
+        is_active = COALESCE(?, is_active)
+      WHERE id = ?
+    `);
 
-    updateQuery += ' WHERE id = ?';
-    updateParams.push(id);
+    updateQuery.run(
+      updateHeroBannerTextDto.order ?? existingText.order,
+      updateHeroBannerTextDto.text ?? existingText.text,
+      updateHeroBannerTextDto.is_active === undefined ? existingText.is_active : updateHeroBannerTextDto.is_active ? 1 : 0,
+      id
+    );
 
-    try {
-      const updateStmt = db.prepare(updateQuery);
-      updateStmt.run(...updateParams);
-    } catch (error) {
-      throw new InvalidHeroBannerDataException(`Erreur lors de la mise à jour du texte: ${error.message}`);
-    }
-
-    // Récupération du texte mis à jour
     return this.findOne(id);
   }
 
@@ -213,32 +215,30 @@ export class HeroBannerService {
    * @returns Le texte de Hero Banner supprimé
    * @throws HeroBannerNotFoundException si le texte n'est pas trouvé
    */
-  async remove(id: string): Promise<HeroBannerDto> {
+  async remove(id: string): Promise<void> {
     const db = this.databaseService.getDatabase();
-    
-    // Récupération du texte avant suppression
-    const heroBanner = await this.findOne(id);
-    
-    const deleteStmt = db.prepare('DELETE FROM hero_banner_texts WHERE id = ?');
-    const result = deleteStmt.run(id);
-    
+    const text = await this.findOne(id);
+
+    // Supprime le texte
+    const result = db.prepare('DELETE FROM hero_banner_texts WHERE id = ?').run(id);
+
     if (result.changes === 0) {
       throw new HeroBannerNotFoundException(id);
     }
-    
-    return heroBanner;
+
+    // Réorganise les ordres des textes restants
+    db.prepare('UPDATE hero_banner_texts SET "order" = "order" - 1 WHERE "order" > ?').run(text.order);
   }
 
   /**
-   * Convertit une entité de base de données en DTO
-   * @param entity Entité de base de données
-   * @returns DTO formaté
+   * Convertit une entité en DTO avec l'ordre
    */
-  private mapEntityToDto(entity: HeroBannerEntity): HeroBannerDto {
+  private mapEntityToDtoText(entity: HeroBannerEntity): HeroBannerTextDto {
     return {
       id: entity.id,
+      order: entity.order,
       text: entity.text,
-      isActive: entity.is_active === 1,
+      is_active: entity.is_active === 1,
       created_at: entity.created_at
     };
   }

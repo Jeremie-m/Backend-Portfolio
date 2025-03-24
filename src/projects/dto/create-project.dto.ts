@@ -1,99 +1,99 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsNotEmpty, IsString, IsOptional, IsUrl, IsArray } from 'class-validator';
-import { Type } from 'class-transformer';
+import { IsNotEmpty, IsOptional, IsString, IsUrl, IsArray, IsNumber, MinLength, Min } from 'class-validator';
 
 /**
- * DTO pour la création d'un nouveau projet
+ * DTO pour la création d'un projet
  */
 export class CreateProjectDto {
   /**
-   * Titre du projet
-   * @example Nouveau portfolio
+   * Ordre d'affichage du projet
+   * @example 1
    */
-  @ApiProperty({ 
-    description: 'Titre du projet',
-    example: 'Nouveau portfolio'
+  @ApiProperty({
+    description: 'Ordre d\'affichage du projet',
+    example: 1
   })
-  @IsNotEmpty()
-  @IsString()
+  @IsNumber({}, { message: 'L\'ordre doit être un nombre' })
+  @Min(1, { message: 'L\'ordre doit être supérieur à 0' })
+  order: number;
+
+  /**
+   * Titre du projet
+   * @example "Portfolio Personnel"
+   */
+  @ApiProperty({
+    description: 'Titre du projet',
+    example: 'Portfolio Personnel'
+  })
+  @IsNotEmpty({ message: 'Le titre est requis' })
+  @IsString({ message: 'Le titre doit être une chaîne de caractères' })
+  @MinLength(3, { message: 'Le titre doit contenir au moins 3 caractères' })
   title: string;
 
   /**
    * Description détaillée du projet
-   * @example Un portfolio moderne utilisant les dernières technologies
+   * @example "Un portfolio moderne développé avec React et NestJS"
    */
-  @ApiProperty({ 
-    description: 'Description détaillée du projet', 
-    required: false,
-    example: 'Un portfolio moderne utilisant les dernières technologies'
+  @ApiProperty({
+    description: 'Description détaillée du projet',
+    example: 'Un portfolio moderne développé avec React et NestJS'
   })
-  @IsOptional()
-  @IsString()
-  description?: string;
+  @IsNotEmpty({ message: 'La description est requise' })
+  @IsString({ message: 'La description doit être une chaîne de caractères' })
+  @MinLength(10, { message: 'La description doit contenir au moins 10 caractères' })
+  description: string;
 
   /**
-   * Compétences utilisées dans le projet
-   * @example ["React", "TypeScript", "NestJS"]
+   * Liste des compétences utilisées dans le projet
+   * @example ["React", "NestJS", "TypeScript"]
    */
-  @ApiProperty({ 
-    description: 'Compétences utilisées dans le projet', 
-    required: false,
-    type: [String],
-    example: ['React', 'TypeScript', 'NestJS']
+  @ApiProperty({
+    description: 'Liste des compétences utilisées dans le projet',
+    example: ['React', 'NestJS', 'TypeScript']
   })
-  @IsOptional()
-  @IsArray()
-  skills?: string[];
+  @IsArray({ message: 'Les compétences doivent être un tableau' })
+  @IsString({ each: true, message: 'Chaque compétence doit être une chaîne de caractères' })
+  skills: string[];
 
   /**
-   * Lien vers le repository GitHub
-   * @example https://github.com/username/portfolio
+   * Lien vers le dépôt GitHub du projet
+   * @example "https://github.com/username/project"
    */
-  @ApiProperty({ 
-    description: 'Lien vers le repository GitHub', 
+  @ApiProperty({
+    description: 'Lien vers le dépôt GitHub du projet',
+    example: 'https://github.com/username/project',
     required: false,
-    example: 'https://github.com/username/portfolio'
+    nullable: true
   })
   @IsOptional()
-  @IsUrl()
-  github_link?: string;
+  @IsUrl({}, { message: 'Le lien GitHub doit être une URL valide' })
+  github_link?: string | null;
 
   /**
-   * Lien vers la démo du projet
-   * @example https://mon-portfolio.com
+   * Lien vers la démo en ligne du projet
+   * @example "https://project-demo.com"
    */
-  @ApiProperty({ 
-    description: 'Lien vers la démo du projet', 
+  @ApiProperty({
+    description: 'Lien vers la démo en ligne du projet',
+    example: 'https://project-demo.com',
     required: false,
-    example: 'https://mon-portfolio.com'
+    nullable: true
   })
   @IsOptional()
-  @IsUrl()
-  demo_link?: string;
-
-  /**
-   * Catégorie du projet
-   * @example Front-end
-   */
-  @ApiProperty({ 
-    description: 'Catégorie du projet', 
-    required: false,
-    example: 'Front-end'
-  })
-  @IsOptional()
-  @IsString()
-  category?: string;
+  @IsUrl({}, { message: 'Le lien de démo doit être une URL valide' })
+  demo_link?: string | null;
 
   /**
    * URL de l'image du projet
-   * @example https://mon-portfolio.com/images/projet1.jpg
+   * @example "https://example.com/project-image.jpg"
    */
-  @ApiProperty({ 
-    description: 'URL de l\'image du projet', 
+  @ApiProperty({
+    description: 'URL de l\'image du projet',
+    example: 'https://example.com/project-image.jpg',
     required: false,
-    example: 'https://mon-portfolio.com/images/projet1.jpg'
+    nullable: true
   })
   @IsOptional()
-  @IsUrl()
-  image_url?: string;
+  @IsUrl({}, { message: 'L\'URL de l\'image doit être une URL valide' })
+  image_url?: string | null;
 } 

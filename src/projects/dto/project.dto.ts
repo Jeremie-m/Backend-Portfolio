@@ -1,103 +1,102 @@
 import { ApiProperty } from '@nestjs/swagger';
 
 /**
- * DTO représentant un projet
+ * DTO pour représenter un projet
  */
 export class ProjectDto {
   /**
    * Identifiant unique du projet
-   * @example 123e4567-e89b-12d3-a456-426614174000
+   * @example "123e4567-e89b-12d3-a456-426614174000"
    */
-  @ApiProperty({ 
+  @ApiProperty({
     description: 'Identifiant unique du projet',
     example: '123e4567-e89b-12d3-a456-426614174000'
   })
   id: string;
 
   /**
-   * Titre du projet
-   * @example Portfolio personnel
+   * Ordre d'affichage du projet
+   * @example 1
    */
-  @ApiProperty({ 
+  @ApiProperty({
+    description: 'Ordre d\'affichage du projet',
+    example: 1
+  })
+  order: number;
+
+  /**
+   * Titre du projet
+   * @example "Portfolio Personnel"
+   */
+  @ApiProperty({
     description: 'Titre du projet',
-    example: 'Portfolio personnel'
+    example: 'Portfolio Personnel'
   })
   title: string;
 
   /**
    * Description détaillée du projet
-   * @example Un portfolio pour présenter mes projets et compétences
+   * @example "Un portfolio moderne développé avec React et NestJS"
    */
-  @ApiProperty({ 
-    description: 'Description détaillée du projet', 
-    required: false,
-    example: 'Un portfolio pour présenter mes projets et compétences'
+  @ApiProperty({
+    description: 'Description détaillée du projet',
+    example: 'Un portfolio moderne développé avec React et NestJS'
   })
-  description?: string;
+  description: string;
 
   /**
-   * Compétences utilisées dans le projet
-   * @example ["React", "Node.js", "TypeScript"]
+   * Liste des compétences utilisées dans le projet
+   * @example ["React", "NestJS", "TypeScript"]
    */
-  @ApiProperty({ 
-    description: 'Compétences utilisées dans le projet', 
-    required: false,
-    type: [String],
-    example: ['React', 'Node.js', 'TypeScript']
+  @ApiProperty({
+    description: 'Liste des compétences utilisées dans le projet',
+    example: ['React', 'NestJS', 'TypeScript']
   })
   skills: string[];
 
   /**
-   * Lien vers le repository GitHub
-   * @example https://github.com/username/project
+   * Lien vers le dépôt GitHub du projet
+   * @example "https://github.com/username/project"
    */
-  @ApiProperty({ 
-    description: 'Lien vers le repository GitHub', 
+  @ApiProperty({
+    description: 'Lien vers le dépôt GitHub du projet',
+    example: 'https://github.com/username/project',
     required: false,
-    example: 'https://github.com/username/project'
+    nullable: true
   })
-  github_link?: string;
+  github_link: string | null;
 
   /**
-   * Lien vers la démo du projet
-   * @example https://project-demo.com
+   * Lien vers la démo en ligne du projet
+   * @example "https://project-demo.com"
    */
-  @ApiProperty({ 
-    description: 'Lien vers la démo du projet', 
+  @ApiProperty({
+    description: 'Lien vers la démo en ligne du projet',
+    example: 'https://project-demo.com',
     required: false,
-    example: 'https://project-demo.com'
+    nullable: true
   })
-  demo_link?: string;
-
-  /**
-   * Catégorie du projet
-   * @example Web Development
-   */
-  @ApiProperty({ 
-    description: 'Catégorie du projet', 
-    required: false,
-    example: 'Web Development'
-  })
-  category?: string;
+  demo_link: string | null;
 
   /**
    * URL de l'image du projet
-   * @example https://example.com/project-image.jpg
+   * @example "https://example.com/project-image.jpg"
    */
-  @ApiProperty({ 
-    description: 'URL de l\'image du projet', 
+  @ApiProperty({
+    description: 'URL de l\'image du projet',
+    example: 'https://example.com/project-image.jpg',
     required: false,
-    example: 'https://example.com/project-image.jpg'
+    nullable: true
   })
-  image_url?: string;
+  image_url: string | null;
 
   /**
    * Date de création du projet
-   * @example 2024-03-15T10:00:00Z
+   * @example "2024-03-23T10:00:00Z"
    */
-  @ApiProperty({ 
+  @ApiProperty({
     description: 'Date de création du projet',
-    example: '2024-03-15T10:00:00Z'
+    example: '2024-03-23T10:00:00Z'
   })
-  created_at: Date;
+  created_at: string;
 } 

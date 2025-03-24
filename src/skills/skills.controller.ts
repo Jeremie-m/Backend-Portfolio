@@ -155,8 +155,7 @@ export class SkillsController {
   @ApiOperation({ summary: 'Supprimer une compétence' })
   @ApiResponse({
     status: 200,
-    description: 'Compétence supprimée avec succès',
-    type: SkillDto
+    description: 'Compétence supprimée avec succès'
   })
   @ApiResponse({
     status: 401,
@@ -170,7 +169,7 @@ export class SkillsController {
     status: 404,
     description: 'Compétence non trouvée'
   })
-  async remove(@Param('id') id: string): Promise<SkillDto> {
+  async remove(@Param('id') id: string): Promise<void> {
     return this.skillsService.remove(id);
   }
 } 

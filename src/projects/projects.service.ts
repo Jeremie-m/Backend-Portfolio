@@ -1,11 +1,5 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
 import { DatabaseService } from '../database/database.service';
-import * as crypto from 'crypto';
-import { 
-  ProjectNotFoundException, 
-  ProjectAlreadyExistsException, 
-  InvalidProjectDataException 
-} from './exceptions/project.exceptions';
 import { ProjectDto } from './dto/project.dto';
 import { CreateProjectDto } from './dto/create-project.dto';
 import { UpdateProjectDto } from './dto/update-project.dto';
@@ -16,12 +10,12 @@ import { FindProjectsDto } from './dto/find-projects.dto';
  */
 interface ProjectEntity {
   id: string;
+  order: number;
   title: string;
-  description: string | null;
-  skills: string | null;
+  description: string;
+  skills: string;
   github_link: string | null;
   demo_link: string | null;
-  category: string | null;
   image_url: string | null;
   created_at: string;
 }
@@ -30,8 +24,11 @@ interface ProjectEntity {
  * Interface pour les résultats paginés
  */
 interface PaginatedResult<T> {
-  data: T[];
+  items: T[];
   total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
 }
 
 /**
@@ -42,48 +39,43 @@ export class ProjectsService {
   /**
    * @param databaseService Service d'accès à la base de données
    */
-  constructor(private databaseService: DatabaseService) {}
+  constructor(private readonly databaseService: DatabaseService) {}
 
   /**
    * Récupère une liste paginée de projets avec options de filtrage
    * @param query Paramètres de recherche et pagination
    * @returns Liste paginée de projets
    */
-  async findAll(query: FindProjectsDto): Promise<PaginatedResult<ProjectDto>> {
+  findAll(query: FindProjectsDto): PaginatedResult<ProjectDto> {
     const db = this.databaseService.getDatabase();
-    const { search, limit = 20, page = 1, sort = 'asc' } = query;
+    const limit = query.limit || 10;
+    const page = query.page || 1;
     const offset = (page - 1) * limit;
 
-    let whereClause = '1=1';
+    let sqlQuery = 'SELECT * FROM projects';
+    let countQuery = 'SELECT COUNT(*) as count FROM projects';
     const params: any[] = [];
 
-    if (search) {
-      whereClause += ' AND (title LIKE ? OR description LIKE ?)';
-      params.push(`%${search}%`, `%${search}%`);
+    if (query.search) {
+      sqlQuery += ' WHERE (title LIKE ? OR description LIKE ?)';
+      countQuery += ' WHERE (title LIKE ? OR description LIKE ?)';
+      params.push(`%${query.search}%`, `%${query.search}%`);
     }
 
-    const countQuery = db.prepare(`
-      SELECT COUNT(*) as total
-      FROM projects
-      WHERE ${whereClause}
-    `);
+    // Ajout du tri par ordre
+    sqlQuery += ' ORDER BY "order" ASC';
+    sqlQuery += ' LIMIT ? OFFSET ?';
+    params.push(limit, offset);
 
-    const result = countQuery.get(...params) as { total: number };
-    const total = result.total;
-
-    const selectQuery = db.prepare(`
-      SELECT *
-      FROM projects
-      WHERE ${whereClause}
-      ORDER BY created_at ${sort === 'desc' ? 'DESC' : 'ASC'}
-      LIMIT ? OFFSET ?
-    `);
-
-    const projects = selectQuery.all(...params, limit, offset) as ProjectEntity[];
+    const projects = db.prepare(sqlQuery).all(...params) as ProjectEntity[];
+    const count = (db.prepare(countQuery).get(...params.slice(0, -2)) as { count: number }).count;
 
     return {
-      data: projects.map(project => this.mapToProjectDto(project)),
-      total
+      items: projects.map(project => this.mapEntityToDto(project)),
+      total: count,
+      page,
+      limit,
+      totalPages: Math.ceil(count / limit)
     };
   }
 
@@ -93,15 +85,15 @@ export class ProjectsService {
    * @returns Projet trouvé
    * @throws ProjectNotFoundException si le projet n'existe pas
    */
-  async findOne(id: string): Promise<ProjectDto> {
+  findOne(id: string): ProjectDto {
     const db = this.databaseService.getDatabase();
-    const project = db.prepare('SELECT * FROM projects WHERE id = ?').get(id) as ProjectEntity | undefined;
-    
+    const project = db.prepare('SELECT * FROM projects WHERE id = ?').get(id) as ProjectEntity;
+
     if (!project) {
-      throw new ProjectNotFoundException(id);
+      throw new NotFoundException(`Le projet avec l'ID ${id} n'existe pas`);
     }
-    
-    return this.mapToProjectDto(project);
+
+    return this.mapEntityToDto(project);
   }
 
   /**
@@ -110,54 +102,50 @@ export class ProjectsService {
    * @returns Projet créé
    * @throws ProjectAlreadyExistsException si un projet avec le même titre existe déjà
    */
-  async create(createProjectDto: CreateProjectDto): Promise<ProjectDto> {
+  create(createProjectDto: CreateProjectDto): ProjectDto {
     const db = this.databaseService.getDatabase();
-    
-    // Vérifier si un projet avec le même titre existe déjà
+
+    // Vérifier si le titre existe déjà
     const existingProject = db.prepare('SELECT id FROM projects WHERE title = ?').get(createProjectDto.title);
-    
     if (existingProject) {
-      throw new ProjectAlreadyExistsException(createProjectDto.title);
+      throw new ConflictException(`Un projet avec le titre "${createProjectDto.title}" existe déjà`);
     }
-    
-    // Préparer les données pour l'insertion
-    const projectData = {
-      id: crypto.randomUUID(),
+
+    // Vérifier si l'ordre existe déjà et ajuster les ordres si nécessaire
+    const existingOrder = db.prepare('SELECT id FROM projects WHERE "order" = ?').get(createProjectDto.order);
+    if (existingOrder) {
+      // Décaler tous les projets avec un ordre supérieur ou égal
+      db.prepare('UPDATE projects SET "order" = "order" + 1 WHERE "order" >= ?').run(createProjectDto.order);
+    }
+
+    const project: ProjectEntity = {
+      id: (db.prepare('SELECT uuid() as id').get() as { id: string }).id,
+      order: createProjectDto.order,
       title: createProjectDto.title,
-      description: createProjectDto.description || null,
-      // Convertir le tableau de compétences en chaîne de caractères pour le stockage
-      skills: createProjectDto.skills && createProjectDto.skills.length > 0 
-        ? createProjectDto.skills.join(',') 
-        : null,
+      description: createProjectDto.description,
+      skills: JSON.stringify(createProjectDto.skills),
       github_link: createProjectDto.github_link || null,
       demo_link: createProjectDto.demo_link || null,
-      category: createProjectDto.category || null,
       image_url: createProjectDto.image_url || null,
       created_at: new Date().toISOString()
     };
-    
-    try {
-      const insert = db.prepare(`
-        INSERT INTO projects (id, title, description, skills, github_link, demo_link, category, image_url, created_at)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-      `);
-      
-      insert.run(
-        projectData.id,
-        projectData.title,
-        projectData.description,
-        projectData.skills,
-        projectData.github_link,
-        projectData.demo_link,
-        projectData.category,
-        projectData.image_url,
-        projectData.created_at
-      );
-      
-      return this.findOne(projectData.id);
-    } catch (error) {
-      throw new InvalidProjectDataException(error.message);
-    }
+
+    db.prepare(`
+      INSERT INTO projects (id, "order", title, description, skills, github_link, demo_link, image_url, created_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `).run(
+      project.id,
+      project.order,
+      project.title,
+      project.description,
+      project.skills,
+      project.github_link,
+      project.demo_link,
+      project.image_url,
+      project.created_at
+    );
+
+    return this.mapEntityToDto(project);
   }
 
   /**
@@ -168,64 +156,61 @@ export class ProjectsService {
    * @throws ProjectNotFoundException si le projet n'existe pas
    * @throws ProjectAlreadyExistsException si un autre projet utilise déjà le titre fourni
    */
-  async update(id: string, updateProjectDto: UpdateProjectDto): Promise<ProjectDto> {
+  update(id: string, updateProjectDto: UpdateProjectDto): ProjectDto {
     const db = this.databaseService.getDatabase();
-    
-    // Vérifier si le projet existe
-    const existingProject = db.prepare('SELECT * FROM projects WHERE id = ?').get(id) as ProjectEntity | undefined;
-    
+    const existingProject = db.prepare('SELECT * FROM projects WHERE id = ?').get(id) as ProjectEntity;
+
     if (!existingProject) {
-      throw new ProjectNotFoundException(id);
+      throw new NotFoundException(`Le projet avec l'ID ${id} n'existe pas`);
     }
-    
-    // Si le titre change, vérifier qu'il n'est pas déjà utilisé
-    if (updateProjectDto.title && updateProjectDto.title !== existingProject.title) {
+
+    if (updateProjectDto.title) {
       const titleExists = db.prepare('SELECT id FROM projects WHERE title = ? AND id != ?').get(updateProjectDto.title, id);
-      
       if (titleExists) {
-        throw new ProjectAlreadyExistsException(updateProjectDto.title);
+        throw new ConflictException(`Un projet avec le titre "${updateProjectDto.title}" existe déjà`);
       }
     }
-    
-    // Préparer les données de mise à jour
-    const updateData: Record<string, any> = { ...updateProjectDto };
-    
-    // Convertir le tableau de compétences en chaîne de caractères si présent
-    if (updateData.skills && Array.isArray(updateData.skills)) {
-      updateData.skills = updateData.skills.length > 0 ? updateData.skills.join(',') : null;
-    }
-    
-    // Construire la requête de mise à jour
-    const updateFields: string[] = [];
-    const updateValues: any[] = [];
-    
-    for (const [key, value] of Object.entries(updateData)) {
-      if (value !== undefined) {
-        updateFields.push(`${key} = ?`);
-        updateValues.push(value);
+
+    // Gérer le changement d'ordre si nécessaire
+    if (updateProjectDto.order && updateProjectDto.order !== existingProject.order) {
+      if (updateProjectDto.order > existingProject.order) {
+        // Déplacer vers le bas : décrémente les ordres entre l'ancien et le nouveau
+        db.prepare('UPDATE projects SET "order" = "order" - 1 WHERE "order" > ? AND "order" <= ?')
+          .run(existingProject.order, updateProjectDto.order);
+      } else {
+        // Déplacer vers le haut : incrémente les ordres entre le nouveau et l'ancien
+        db.prepare('UPDATE projects SET "order" = "order" + 1 WHERE "order" >= ? AND "order" < ?')
+          .run(updateProjectDto.order, existingProject.order);
       }
     }
-    
-    if (updateFields.length === 0) {
-      return this.findOne(id);
-    }
-    
-    // Ajouter l'ID à la fin des valeurs pour la clause WHERE
-    updateValues.push(id);
-    
-    try {
-      const updateQuery = db.prepare(`
-        UPDATE projects
-        SET ${updateFields.join(', ')}
-        WHERE id = ?
-      `);
-      
-      updateQuery.run(...updateValues);
-      
-      return this.findOne(id);
-    } catch (error) {
-      throw new InvalidProjectDataException(error.message);
-    }
+
+    const updatedProject: ProjectEntity = {
+      ...existingProject,
+      order: updateProjectDto.order ?? existingProject.order,
+      title: updateProjectDto.title ?? existingProject.title,
+      description: updateProjectDto.description ?? existingProject.description,
+      skills: updateProjectDto.skills ? JSON.stringify(updateProjectDto.skills) : existingProject.skills,
+      github_link: updateProjectDto.github_link ?? existingProject.github_link,
+      demo_link: updateProjectDto.demo_link ?? existingProject.demo_link,
+      image_url: updateProjectDto.image_url ?? existingProject.image_url
+    };
+
+    db.prepare(`
+      UPDATE projects
+      SET "order" = ?, title = ?, description = ?, skills = ?, github_link = ?, demo_link = ?, image_url = ?
+      WHERE id = ?
+    `).run(
+      updatedProject.order,
+      updatedProject.title,
+      updatedProject.description,
+      updatedProject.skills,
+      updatedProject.github_link,
+      updatedProject.demo_link,
+      updatedProject.image_url,
+      id
+    );
+
+    return this.mapEntityToDto(updatedProject);
   }
 
   /**
@@ -234,26 +219,37 @@ export class ProjectsService {
    * @returns Projet supprimé
    * @throws ProjectNotFoundException si le projet n'existe pas
    */
-  async remove(id: string): Promise<ProjectDto> {
+  remove(id: string): void {
     const db = this.databaseService.getDatabase();
-    const project = await this.findOne(id);
-    
+    const project = db.prepare('SELECT * FROM projects WHERE id = ?').get(id) as ProjectEntity;
+
+    if (!project) {
+      throw new NotFoundException(`Le projet avec l'ID ${id} n'existe pas`);
+    }
+
+    // Supprimer le projet
     db.prepare('DELETE FROM projects WHERE id = ?').run(id);
-    
-    return project;
+
+    // Réorganiser les ordres des projets restants
+    db.prepare('UPDATE projects SET "order" = "order" - 1 WHERE "order" > ?').run(project.order);
   }
 
   /**
-   * Convertit les données brutes de la base de données en DTO
-   * @param project Données brutes du projet
+   * Convertit une entité de base de données en DTO
+   * @param entity Données brutes du projet
    * @returns DTO du projet
    */
-  private mapToProjectDto(project: ProjectEntity): ProjectDto {
-    const dto = { ...project } as unknown as ProjectDto;
-    
-    // Convertir la chaîne de compétences en tableau
-    dto.skills = project.skills ? project.skills.split(',').map(skill => skill.trim()) : [];
-    
-    return dto;
+  private mapEntityToDto(entity: ProjectEntity): ProjectDto {
+    return {
+      id: entity.id,
+      order: entity.order,
+      title: entity.title,
+      description: entity.description,
+      skills: JSON.parse(entity.skills),
+      github_link: entity.github_link,
+      demo_link: entity.demo_link,
+      image_url: entity.image_url,
+      created_at: entity.created_at
+    };
   }
 } 

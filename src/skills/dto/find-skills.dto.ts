@@ -3,39 +3,27 @@ import { IsOptional, IsString, IsInt, Min } from 'class-validator';
 import { Type } from 'class-transformer';
 
 /**
- * DTO pour la recherche et pagination des compétences
+ * DTO pour la recherche de compétences
  */
 export class FindSkillsDto {
   /**
-   * Filtrer les compétences par catégorie
-   * @example Frontend Framework
+   * Recherche par nom
+   * @example "React"
    */
   @ApiPropertyOptional({
-    description: 'Filtrer par catégorie',
-    example: 'Frontend Framework'
-  })
-  @IsOptional()
-  @IsString()
-  category?: string;
-
-  /**
-   * Terme de recherche pour filtrer les compétences par nom ou description
-   * @example react
-   */
-  @ApiPropertyOptional({
-    description: 'Rechercher dans le nom ou la description',
-    example: 'react'
+    description: 'Recherche par nom',
+    example: 'React'
   })
   @IsOptional()
   @IsString()
   search?: string;
 
   /**
-   * Nombre maximum de compétences à retourner par page
+   * Nombre d'éléments par page
    * @example 10
    */
   @ApiPropertyOptional({
-    description: 'Nombre de compétences par page',
+    description: 'Nombre d\'éléments par page',
     minimum: 1,
     default: 10,
     example: 10
@@ -47,11 +35,11 @@ export class FindSkillsDto {
   limit?: number = 10;
 
   /**
-   * Numéro de la page à retourner
+   * Numéro de page
    * @example 1
    */
   @ApiPropertyOptional({
-    description: 'Numéro de la page',
+    description: 'Numéro de page',
     minimum: 1,
     default: 1,
     example: 1
@@ -61,18 +49,4 @@ export class FindSkillsDto {
   @IsInt()
   @Min(1)
   page?: number = 1;
-
-  /**
-   * Ordre de tri des compétences par nom
-   * @example asc
-   */
-  @ApiPropertyOptional({
-    description: 'Trier par nom',
-    enum: ['asc', 'desc'],
-    default: 'asc',
-    example: 'asc'
-  })
-  @IsOptional()
-  @IsString()
-  sort?: 'asc' | 'desc' = 'asc';
 } 

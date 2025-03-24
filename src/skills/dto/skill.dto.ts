@@ -1,13 +1,12 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { CreateSkillDto } from './create-skill.dto';
 
 /**
- * DTO représentant une compétence
+ * DTO pour représenter une compétence
  */
-export class SkillDto extends CreateSkillDto {
+export class SkillDto {
   /**
    * Identifiant unique de la compétence
-   * @example 123e4567-e89b-12d3-a456-426614174000
+   * @example "123e4567-e89b-12d3-a456-426614174000"
    */
   @ApiProperty({
     description: 'Identifiant unique de la compétence',
@@ -16,12 +15,34 @@ export class SkillDto extends CreateSkillDto {
   id: string;
 
   /**
-   * Date d'ajout de la compétence
-   * @example 2024-02-11T10:00:00Z
+   * Ordre d'affichage de la compétence
+   * @example 1
    */
   @ApiProperty({
-    description: 'Date d\'ajout de la compétence',
-    example: '2024-02-11T10:00:00Z'
+    description: 'Ordre d\'affichage de la compétence',
+    example: 1
   })
-  created_at: Date;
+  order: number;
+
+  /**
+   * Nom de la compétence
+   * @example "React"
+   */
+  @ApiProperty({
+    description: 'Nom de la compétence',
+    example: 'React'
+  })
+  name: string;
+
+  /**
+   * URL de l'image de la compétence
+   * @example "/images/skills/react.svg"
+   */
+  @ApiProperty({
+    description: 'URL de l\'image de la compétence',
+    example: '/images/skills/react.svg',
+    required: false,
+    nullable: true
+  })
+  image_url: string | null;
 } 

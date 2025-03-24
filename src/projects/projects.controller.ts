@@ -18,8 +18,11 @@ import { ProjectsService } from './projects.service';
  * Interface de pagination pour les projets
  */
 interface PaginatedProjects {
-  data: ProjectDto[];
+  items: ProjectDto[];
   total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
 }
 
 /**
@@ -144,7 +147,7 @@ export class ProjectsController {
   /**
    * Supprime un projet
    * @param {string} id - ID du projet à supprimer
-   * @returns {Promise<ProjectDto>} Projet supprimé
+   * @returns {Promise<void>}
    */
   @Delete(':id')
   @UseGuards(JwtAuthGuard, RolesGuard)
@@ -153,8 +156,7 @@ export class ProjectsController {
   @ApiOperation({ summary: 'Supprimer un projet' })
   @ApiResponse({
     status: 200,
-    description: 'Projet supprimé avec succès',
-    type: ProjectDto
+    description: 'Projet supprimé avec succès'
   })
   @ApiResponse({
     status: 401,
@@ -168,7 +170,7 @@ export class ProjectsController {
     status: 404,
     description: 'Projet non trouvé'
   })
-  async remove(@Param('id') id: string): Promise<ProjectDto> {
+  async remove(@Param('id') id: string): Promise<void> {
     return this.projectsService.remove(id);
   }
 } 

@@ -1,57 +1,46 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsString, IsUrl, IsOptional } from 'class-validator';
+import { IsNotEmpty, IsOptional, IsString, IsUrl, IsNumber, MinLength, Min } from 'class-validator';
 
 /**
- * DTO pour la création d'une nouvelle compétence
+ * DTO pour la création d'une compétence
  */
 export class CreateSkillDto {
   /**
+   * Ordre d'affichage de la compétence
+   * @example 1
+   */
+  @ApiProperty({
+    description: 'Ordre d\'affichage de la compétence',
+    example: 1
+  })
+  @IsNumber({}, { message: 'L\'ordre doit être un nombre' })
+  @Min(1, { message: 'L\'ordre doit être supérieur à 0' })
+  order: number;
+
+  /**
    * Nom de la compétence
-   * @example React
+   * @example "React"
    */
   @ApiProperty({
     description: 'Nom de la compétence',
     example: 'React'
   })
-  @IsString()
+  @IsNotEmpty({ message: 'Le nom est requis' })
+  @IsString({ message: 'Le nom doit être une chaîne de caractères' })
+  @MinLength(2, { message: 'Le nom doit contenir au moins 2 caractères' })
   name: string;
 
   /**
-   * Catégorie de la compétence
-   * @example Frontend Framework
+   * URL de l'image représentant la compétence
+   * @example "https://example.com/react-icon.png"
    */
   @ApiProperty({
-    description: 'Catégorie de la compétence',
-    example: 'Frontend Framework',
-    required: false
+    description: 'URL de l\'image représentant la compétence',
+    example: 'https://example.com/react-icon.png',
+    required: false,
+    nullable: true
   })
-  @IsString()
   @IsOptional()
-  category?: string;
-
-  /**
-   * Description de la compétence
-   * @example Une bibliothèque JavaScript pour créer des interfaces utilisateurs
-   */
-  @ApiProperty({
-    description: 'Description de la compétence',
-    example: 'Une bibliothèque JavaScript pour créer des interfaces utilisateurs',
-    required: false
-  })
-  @IsString()
-  @IsOptional()
-  description?: string;
-
-  /**
-   * URL de l'icône ou logo de la compétence
-   * @example https://example.com/react-logo.png
-   */
-  @ApiProperty({
-    description: 'URL de l\'icône ou logo de la compétence',
-    example: 'https://example.com/react-logo.png',
-    required: false
-  })
-  @IsUrl()
-  @IsOptional()
-  image_url?: string;
+  @IsUrl({}, { message: 'L\'URL de l\'image doit être une URL valide' })
+  image_url?: string | null;
 } 

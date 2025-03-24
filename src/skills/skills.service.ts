@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
 import { DatabaseService } from '../database/database.service';
 import * as crypto from 'crypto';
 import { 
@@ -16,11 +16,9 @@ import { FindSkillsDto } from './dto/find-skills.dto';
  */
 interface SkillEntity {
   id: string;
+  order: number;
   name: string;
-  category: string | null;
-  description: string | null;
   image_url: string | null;
-  created_at: string;
 }
 
 /**
@@ -39,7 +37,7 @@ export class SkillsService {
   /**
    * @param databaseService Service d'accès à la base de données
    */
-  constructor(private databaseService: DatabaseService) {}
+  constructor(private readonly databaseService: DatabaseService) {}
 
   /**
    * Récupère une liste paginée de compétences avec options de filtrage
@@ -48,20 +46,15 @@ export class SkillsService {
    */
   async findAll(query: FindSkillsDto): Promise<PaginatedResult<SkillDto>> {
     const db = this.databaseService.getDatabase();
-    const { category, search, limit = 10, page = 1, sort = 'asc' } = query;
+    const { search, limit = 10, page = 1 } = query;
     const offset = (page - 1) * limit;
 
     let whereClause = '1=1';
     const params: any[] = [];
 
-    if (category) {
-      whereClause += ' AND category = ?';
-      params.push(category);
-    }
-
     if (search) {
-      whereClause += ' AND (name LIKE ? OR description LIKE ?)';
-      params.push(`%${search}%`, `%${search}%`);
+      whereClause += ' AND name LIKE ?';
+      params.push(`%${search}%`);
     }
 
     const countQuery = db.prepare(`
@@ -74,17 +67,17 @@ export class SkillsService {
     const total = result.total;
 
     const selectQuery = db.prepare(`
-      SELECT *
+      SELECT id, order, name, image_url
       FROM skills
       WHERE ${whereClause}
-      ORDER BY name ${sort === 'desc' ? 'DESC' : 'ASC'}
+      ORDER BY order ASC
       LIMIT ? OFFSET ?
     `);
 
     const skills = selectQuery.all(...params, limit, offset) as SkillEntity[];
 
     return {
-      data: skills.map(skill => this.mapToSkillDto(skill)),
+      data: skills.map(skill => this.mapEntityToDto(skill)),
       total
     };
   }
@@ -97,13 +90,13 @@ export class SkillsService {
    */
   async findOne(id: string): Promise<SkillDto> {
     const db = this.databaseService.getDatabase();
-    const skill = db.prepare('SELECT * FROM skills WHERE id = ?').get(id) as SkillEntity | undefined;
+    const skill = db.prepare('SELECT id, order, name, image_url FROM skills WHERE id = ?').get(id) as SkillEntity | undefined;
     
     if (!skill) {
-      throw new SkillNotFoundException(id);
+      throw new NotFoundException(`La compétence avec l'ID ${id} n'existe pas`);
     }
     
-    return this.mapToSkillDto(skill);
+    return this.mapEntityToDto(skill);
   }
 
   /**
@@ -115,39 +108,40 @@ export class SkillsService {
   async create(createSkillDto: CreateSkillDto): Promise<SkillDto> {
     const db = this.databaseService.getDatabase();
     
-    // Vérifier si une compétence avec le même nom existe déjà
     const existingSkill = db.prepare('SELECT id FROM skills WHERE name = ?').get(createSkillDto.name);
     
     if (existingSkill) {
-      throw new SkillAlreadyExistsException(createSkillDto.name);
+      throw new ConflictException(`Une compétence avec le nom "${createSkillDto.name}" existe déjà`);
     }
     
-    // Préparer les données pour l'insertion
-    const skillData = {
+    // Vérifier si l'ordre existe déjà et ajuster les ordres si nécessaire
+    const existingOrder = db.prepare('SELECT id FROM skills WHERE "order" = ?').get(createSkillDto.order);
+    if (existingOrder) {
+      // Décaler tous les skills avec un ordre supérieur ou égal
+      db.prepare('UPDATE skills SET "order" = "order" + 1 WHERE "order" >= ?').run(createSkillDto.order);
+    }
+    
+    const skillData: SkillEntity = {
       id: crypto.randomUUID(),
+      order: createSkillDto.order,
       name: createSkillDto.name,
-      category: createSkillDto.category || null,
-      description: createSkillDto.description || null,
-      image_url: createSkillDto.image_url || null,
-      created_at: new Date().toISOString()
+      image_url: createSkillDto.image_url || null
     };
     
     try {
       const insert = db.prepare(`
-        INSERT INTO skills (id, name, category, description, image_url, created_at)
-        VALUES (?, ?, ?, ?, ?, ?)
+        INSERT INTO skills (id, "order", name, image_url)
+        VALUES (?, ?, ?, ?)
       `);
       
       insert.run(
         skillData.id,
+        skillData.order,
         skillData.name,
-        skillData.category,
-        skillData.description,
-        skillData.image_url,
-        skillData.created_at
+        skillData.image_url
       );
       
-      return this.findOne(skillData.id);
+      return this.mapEntityToDto(skillData);
     } catch (error) {
       throw new InvalidSkillDataException(error.message);
     }
@@ -164,50 +158,55 @@ export class SkillsService {
   async update(id: string, updateSkillDto: UpdateSkillDto): Promise<SkillDto> {
     const db = this.databaseService.getDatabase();
     
-    // Vérifier si la compétence existe
-    const existingSkill = db.prepare('SELECT * FROM skills WHERE id = ?').get(id) as SkillEntity | undefined;
+    const existingSkill = db.prepare('SELECT id, order, name, image_url FROM skills WHERE id = ?').get(id) as SkillEntity | undefined;
     
     if (!existingSkill) {
-      throw new SkillNotFoundException(id);
+      throw new NotFoundException(`La compétence avec l'ID ${id} n'existe pas`);
     }
     
-    // Si le nom change, vérifier qu'il n'est pas déjà utilisé
     if (updateSkillDto.name && updateSkillDto.name !== existingSkill.name) {
       const nameExists = db.prepare('SELECT id FROM skills WHERE name = ? AND id != ?').get(updateSkillDto.name, id);
       
       if (nameExists) {
-        throw new SkillAlreadyExistsException(updateSkillDto.name);
+        throw new ConflictException(`Une compétence avec le nom "${updateSkillDto.name}" existe déjà`);
       }
     }
     
-    // Construire la requête de mise à jour
-    const updateFields: string[] = [];
-    const updateValues: any[] = [];
-    
-    for (const [key, value] of Object.entries(updateSkillDto)) {
-      if (value !== undefined) {
-        updateFields.push(`${key} = ?`);
-        updateValues.push(value);
+    // Gérer le changement d'ordre si nécessaire
+    if (updateSkillDto.order && updateSkillDto.order !== existingSkill.order) {
+      if (updateSkillDto.order > existingSkill.order) {
+        // Déplacer vers le bas : décrémente les ordres entre l'ancien et le nouveau
+        db.prepare('UPDATE skills SET "order" = "order" - 1 WHERE "order" > ? AND "order" <= ?')
+          .run(existingSkill.order, updateSkillDto.order);
+      } else {
+        // Déplacer vers le haut : incrémente les ordres entre le nouveau et l'ancien
+        db.prepare('UPDATE skills SET "order" = "order" + 1 WHERE "order" >= ? AND "order" < ?')
+          .run(updateSkillDto.order, existingSkill.order);
       }
     }
     
-    if (updateFields.length === 0) {
-      return this.findOne(id);
-    }
-    
-    // Ajouter l'ID à la fin des valeurs pour la clause WHERE
-    updateValues.push(id);
+    const updatedSkill: SkillEntity = {
+      ...existingSkill,
+      order: updateSkillDto.order ?? existingSkill.order,
+      name: updateSkillDto.name ?? existingSkill.name,
+      image_url: updateSkillDto.image_url ?? existingSkill.image_url
+    };
     
     try {
       const updateQuery = db.prepare(`
         UPDATE skills
-        SET ${updateFields.join(', ')}
+        SET "order" = ?, name = ?, image_url = ?
         WHERE id = ?
       `);
       
-      updateQuery.run(...updateValues);
+      updateQuery.run(
+        updatedSkill.order,
+        updatedSkill.name,
+        updatedSkill.image_url,
+        id
+      );
       
-      return this.findOne(id);
+      return this.mapEntityToDto(updatedSkill);
     } catch (error) {
       throw new InvalidSkillDataException(error.message);
     }
@@ -219,24 +218,22 @@ export class SkillsService {
    * @returns Compétence supprimée
    * @throws SkillNotFoundException si la compétence n'existe pas
    */
-  async remove(id: string): Promise<SkillDto> {
+  async remove(id: string): Promise<void> {
     const db = this.databaseService.getDatabase();
     const skill = await this.findOne(id);
     
     db.prepare('DELETE FROM skills WHERE id = ?').run(id);
     
-    return skill;
+    // Réorganiser les ordres des compétences restantes
+    db.prepare('UPDATE skills SET "order" = "order" - 1 WHERE "order" > ?').run(skill.order);
   }
 
-  /**
-   * Convertit les données brutes de la base de données en DTO
-   * @param skill Données brutes de la compétence
-   * @returns DTO de la compétence
-   */
-  private mapToSkillDto(skill: SkillEntity): SkillDto {
+  private mapEntityToDto(entity: SkillEntity): SkillDto {
     return {
-      ...skill,
-      created_at: new Date(skill.created_at)
+      id: entity.id,
+      order: entity.order,
+      name: entity.name,
+      image_url: entity.image_url
     };
   }
 } 
