@@ -90,7 +90,7 @@ export class SkillsService {
    */
   async findOne(id: string): Promise<SkillDto> {
     const db = this.databaseService.getDatabase();
-    const skill = db.prepare('SELECT id, order, name, image_url FROM skills WHERE id = ?').get(id) as SkillEntity | undefined;
+    const skill = db.prepare('SELECT id, "order", name, image_url FROM skills WHERE id = ?').get(id) as SkillEntity | undefined;
     
     if (!skill) {
       throw new NotFoundException(`La compétence avec l'ID ${id} n'existe pas`);
@@ -158,7 +158,7 @@ export class SkillsService {
   async update(id: string, updateSkillDto: UpdateSkillDto): Promise<SkillDto> {
     const db = this.databaseService.getDatabase();
     
-    const existingSkill = db.prepare('SELECT id, order, name, image_url FROM skills WHERE id = ?').get(id) as SkillEntity | undefined;
+    const existingSkill = db.prepare('SELECT id, "order", name, image_url FROM skills WHERE id = ?').get(id) as SkillEntity | undefined;
     
     if (!existingSkill) {
       throw new NotFoundException(`La compétence avec l'ID ${id} n'existe pas`);
