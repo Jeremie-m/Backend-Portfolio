@@ -163,6 +163,114 @@ export class DatabaseService implements OnModuleDestroy {
       console.log('Compétences initialisées avec les données par défaut');
     }
 
+    // Initialisation des projets si aucun n'existe
+    const projectsCount = this.db.prepare('SELECT COUNT(*) as count FROM projects').get() as CountResult;
+    
+    if (projectsCount.count === 0) {
+      const defaultProjects = [
+        {
+          order: 1,
+          title: "Portfolio Personnel",
+          description: "Mon portfolio personnel développé avec amour, pour vos beaux yeux.",
+          skills: JSON.stringify(["React", "Next.js", "Tailwind", "Nest.js", "SQLite"]),
+          github_link: "https://github.com/jeremie-m/portfolio",
+          demo_link: "https://jeremie-m.dev",
+          image_url: "https://placehold.co/1024x720/png"
+        },
+        {
+          order: 2,
+          title: "Blog Tech",
+          description: "Un blog sur les technologies web et le développement",
+          skills: JSON.stringify(["React", "Node.js", "MongoDB"]),
+          github_link: "https://github.com/jeremie-m/blog",
+          demo_link: "https://blog.jeremie-m.dev",
+          image_url: "https://placehold.co/1024x720/png"
+        },
+        {
+          order: 3,
+          title: "Application E-commerce",
+          description: "Une application e-commerce complète avec panier et paiement",
+          skills: JSON.stringify(["Next.js", "Nest.js", "PostgreSQL"]),
+          github_link: "https://github.com/jeremie-m/ecommerce",
+          demo_link: "https://shop.jeremie-m.dev",
+          image_url: "https://placehold.co/1024x720/png"
+        },
+        {
+          order: 4,
+          title: "Dashboard Admin",
+          description: "Un tableau de bord administratif pour gérer les utilisateurs et les produits",
+          skills: JSON.stringify(["React", "Redux", "Express", "MongoDB"]),
+          github_link: "https://github.com/jeremie-m/admin-dashboard",
+          demo_link: "https://admin.jeremie-m.dev",
+          image_url: "https://placehold.co/1024x720/png"
+        },
+        {
+          order: 5,
+          title: "API REST",
+          description: "Une API REST complète pour gérer les utilisateurs et les produits",
+          skills: JSON.stringify(["Node.js", "Express", "MongoDB"]),
+          github_link: "https://github.com/jeremie-m/rest-api",
+          demo_link: "https://api.jeremie-m.dev",
+          image_url: "https://placehold.co/1024x720/png"
+        },
+        {
+          order: 6,
+          title: "Application Mobile",
+          description: "Une application mobile pour iOS et Android",
+          skills: JSON.stringify(["React Native", "Redux", "Firebase"]),
+          github_link: "https://github.com/jeremie-m/mobile-app",
+          demo_link: "https://mobile.jeremie-m.dev",
+          image_url: "https://placehold.co/1024x720/png"
+        },
+        {
+          order: 7,
+          title: "Plateforme d'Apprentissage",
+          description: "Une plateforme e-learning avec gestion de cours, quiz interactifs et suivi de progression pour les apprenants",
+          skills: JSON.stringify(["React", "Next.js", "Tailwind", "Node.js", "MongoDB"]),
+          github_link: "https://github.com/jeremie-m/e-learning-platform",
+          demo_link: "https://apprendre.jeremie-m.dev",
+          image_url: "https://placehold.co/1024x720/png"
+        },
+        {
+          order: 8,
+          title: "Gestionnaire de Tâches",
+          description: "Application de gestion de tâches collaborative avec fonctionnalités de planification et notifications en temps réel",
+          skills: JSON.stringify(["React", "Redux", "Express", "PostgreSQL", "Firebase"]),
+          github_link: "https://github.com/jeremie-m/task-manager",
+          demo_link: "https://tasks.jeremie-m.dev",
+          image_url: "https://placehold.co/1024x720/png"
+        },
+        {
+          order: 9,
+          title: "Application Météo PWA",
+          description: "Application météo progressive (PWA) avec géolocalisation et prévisions sur 5 jours, fonctionnant même hors ligne",
+          skills: JSON.stringify(["React", "Tailwind", "Node.js", "Express"]),
+          github_link: "https://github.com/jeremie-m/weather-pwa",
+          demo_link: "https://meteo.jeremie-m.dev",
+          image_url: "https://placehold.co/1024x720/png"
+        }
+      ];
+      
+      const insertStmt = this.db.prepare(`
+        INSERT INTO projects (id, "order", title, description, skills, github_link, demo_link, image_url, created_at)
+        VALUES (uuid(), ?, ?, ?, ?, ?, ?, ?, datetime('now'))
+      `);
+      
+      defaultProjects.forEach(project => {
+        insertStmt.run(
+          project.order,
+          project.title,
+          project.description,
+          project.skills,
+          project.github_link,
+          project.demo_link,
+          project.image_url
+        );
+      });
+      
+      console.log('Projets initialisés avec les données par défaut');
+    }
+
     // Initialisation des données "À propos de moi" si aucune n'existe
     const aboutMeCount = this.db.prepare('SELECT COUNT(*) as count FROM about_me').get() as CountResult;
     
