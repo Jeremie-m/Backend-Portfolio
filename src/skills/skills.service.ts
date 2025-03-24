@@ -67,10 +67,10 @@ export class SkillsService {
     const total = result.total;
 
     const selectQuery = db.prepare(`
-      SELECT id, order, name, image_url
+      SELECT id, "order", name, image_url
       FROM skills
       WHERE ${whereClause}
-      ORDER BY order ASC
+      ORDER BY "order" ASC
       LIMIT ? OFFSET ?
     `);
 
