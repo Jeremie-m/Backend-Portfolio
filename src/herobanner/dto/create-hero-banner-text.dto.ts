@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsBoolean, IsNotEmpty, IsNumber, IsOptional, IsString, MinLength } from 'class-validator';
+import { IsBoolean, IsNotEmpty, IsNumber, IsOptional, IsString, MinLength, Min } from 'class-validator';
 
 /**
  * DTO pour la création d'un texte de la Hero Banner
@@ -11,11 +11,13 @@ export class CreateHeroBannerTextDto {
    */
   @ApiProperty({
     description: 'Ordre d\'affichage du texte',
-    example: 1
+    example: 1,
+    required: false
   })
-  @IsNumber()
-  @IsNotEmpty({ message: 'L\'ordre d\'affichage est requis' })
-  order: number;
+  @IsOptional()
+  @IsNumber({}, { message: 'L\'ordre doit être un nombre' })
+  @Min(1, { message: 'L\'ordre doit être supérieur à 0' })
+  order?: number;
 
   /**
    * Contenu du texte

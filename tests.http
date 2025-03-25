@@ -22,33 +22,37 @@ Content-Type: application/json
 ### ============================================================
 
 ### Récupérer tous les textes du Hero Banner
-GET {{baseUrl}}/herobanner
+GET {{baseUrl}}/herobanner?limit=100
 
 ### Récupérer un texte du Hero Banner par son ID
 GET {{baseUrl}}/herobanner/9baee584-bfd0-4e6c-9ac5-ab6bc7491607
 
 ### Créer un nouveau texte du Hero Banner (authentification requise)
+# @name createHeroBanner
 POST {{baseUrl}}/herobanner
 Content-Type: application/json
 Authorization: Bearer {{apiToken}}
 
 {
-  "text": "Nouveau texte du Hero Banner",
+  "text": "Nouveau texte du Hero Banner 2",
   "is_active": true
 }
 
+###
+@heroBannerId = {{createHeroBanner.response.body.id}}
+
 ### Mettre à jour un texte du Hero Banner (authentification requise)
-PUT {{baseUrl}}/herobanner/8110e7c3-3256-4be5-a1df-19495b8b55fe
+PUT {{baseUrl}}/herobanner/{{heroBannerId}}
 Content-Type: application/json
 Authorization: Bearer {{apiToken}}
 
 {
-  "text": "Texte du Hero Banner mis à jour",
-  "is_active": true
+  "text": "Texte du Hero Banner modifié",
+  "is_active": false,
 }
 
 ### Supprimer un texte du Hero Banner (authentification requise)
-DELETE {{baseUrl}}/herobanner/8110e7c3-3256-4be5-a1df-19495b8b55fe
+DELETE {{baseUrl}}/herobanner/{{heroBannerId}}
 Authorization: Bearer {{apiToken}}
 
 ### ============================================================
@@ -104,7 +108,7 @@ Authorization: Bearer {{apiToken}}
 ### ============================================================
 
 ### Récupérer tout les skills
-GET {{baseUrl}}/skills
+GET {{baseUrl}}/skills?limit=100
 
 ### Récupérer tout les skills avec pagination
 GET {{baseUrl}}/skills?page=1&limit=10
@@ -119,6 +123,7 @@ GET {{baseUrl}}/skills?sort=name&order=asc
 GET {{baseUrl}}/skills/d6bcdf28-aed7-4ba9-965f-6351ec575d72
 
 ### Créer un nouveau skill (authentification requise)
+# @name createSkill
 POST {{baseUrl}}/skills
 Content-Type: application/json
 Authorization: Bearer {{apiToken}}
@@ -128,8 +133,11 @@ Authorization: Bearer {{apiToken}}
   "image_url": "https://example.com/image.jpg"
 }
 
+###
+@skillId = {{createSkill.response.body.id}}
+
 ### Mettre à jour un skill (authentification requise)
-PUT {{baseUrl}}/skills/d6bcdf28-aed7-4ba9-965f-6351ec575d72
+PUT {{baseUrl}}/skills/{{skillId}}
 Content-Type: application/json
 Authorization: Bearer {{apiToken}}
 
@@ -139,7 +147,7 @@ Authorization: Bearer {{apiToken}}
 }
 
 ### Supprimer un skill (authentification requise)
-DELETE {{baseUrl}}/skills/d6bcdf28-aed7-4ba9-965f-6351ec575d72
+DELETE {{baseUrl}}/skills/{{skillId}}
 Authorization: Bearer {{apiToken}}
 
  

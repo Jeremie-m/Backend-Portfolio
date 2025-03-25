@@ -125,13 +125,13 @@ export class HeroBannerService {
       throw new HeroBannerAlreadyExistsException(createHeroBannerTextDto.text);
     }
 
-    // Récupère l'ordre maximum actuel
-    const maxOrderStmt = db.prepare('SELECT MAX("order") as maxOrder FROM hero_banner_texts');
-    const maxOrder = (maxOrderStmt.get() as { maxOrder: number | null })?.maxOrder || 0;
+    // Trouver la valeur maximale d'order
+    const maxOrder = db.prepare('SELECT MAX("order") as maxOrder FROM hero_banner_texts').get() as { maxOrder: number | null };
+    const newOrder = (maxOrder.maxOrder || 0) + 1;  
 
     const newText: HeroBannerEntity = {
       id: crypto.randomUUID(),
-      order: maxOrder + 1,
+      order: newOrder,
       text: createHeroBannerTextDto.text,
       is_active: createHeroBannerTextDto.is_active ? 1 : 0,
       created_at: new Date().toISOString()
