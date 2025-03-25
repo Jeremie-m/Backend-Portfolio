@@ -111,25 +111,23 @@ export class ProjectsService {
       throw new ConflictException(`Un projet avec le titre "${createProjectDto.title}" existe déjà`);
     }
 
-    // Vérifier si l'ordre existe déjà et ajuster les ordres si nécessaire
-    const existingOrder = db.prepare('SELECT id FROM projects WHERE "order" = ?').get(createProjectDto.order);
-    if (existingOrder) {
-      // Décaler tous les projets avec un ordre supérieur ou égal
-      db.prepare('UPDATE projects SET "order" = "order" + 1 WHERE "order" >= ?').run(createProjectDto.order);
-    }
+    // Trouver la valeur maximale d'order
+    const maxOrder = db.prepare('SELECT MAX("order") as maxOrder FROM projects').get() as { maxOrder: number | null };
+    const newOrder = (maxOrder.maxOrder || 0) + 1;
 
     const project: ProjectEntity = {
       id: (db.prepare('SELECT uuid() as id').get() as { id: string }).id,
-      order: createProjectDto.order,
+      order: newOrder, // Utiliser la nouvelle valeur d'order automatiquement calculée
       title: createProjectDto.title,
       description: createProjectDto.description,
-      skills: JSON.stringify(createProjectDto.skills),
+      skills: JSON.stringify(createProjectDto.skills || []),
       github_link: createProjectDto.github_link || null,
       demo_link: createProjectDto.demo_link || null,
       image_url: createProjectDto.image_url || null,
       created_at: new Date().toISOString()
     };
 
+    // Le reste du code reste identique...
     db.prepare(`
       INSERT INTO projects (id, "order", title, description, skills, github_link, demo_link, image_url, created_at)
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)

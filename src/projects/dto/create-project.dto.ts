@@ -11,11 +11,13 @@ export class CreateProjectDto {
    */
   @ApiProperty({
     description: 'Ordre d\'affichage du projet',
-    example: 1
+    example: 1,
+    required: false
   })
+  @IsOptional()
   @IsNumber({}, { message: 'L\'ordre doit être un nombre' })
   @Min(1, { message: 'L\'ordre doit être supérieur à 0' })
-  order: number;
+  order?: number;
 
   /**
    * Titre du projet

@@ -114,16 +114,13 @@ export class SkillsService {
       throw new ConflictException(`Une compétence avec le nom "${createSkillDto.name}" existe déjà`);
     }
     
-    // Vérifier si l'ordre existe déjà et ajuster les ordres si nécessaire
-    const existingOrder = db.prepare('SELECT id FROM skills WHERE "order" = ?').get(createSkillDto.order);
-    if (existingOrder) {
-      // Décaler tous les skills avec un ordre supérieur ou égal
-      db.prepare('UPDATE skills SET "order" = "order" + 1 WHERE "order" >= ?').run(createSkillDto.order);
-    }
+    // Trouver la valeur maximale d'order
+    const maxOrder = db.prepare('SELECT MAX("order") as maxOrder FROM skills').get() as { maxOrder: number | null };
+    const newOrder = (maxOrder.maxOrder || 0) + 1;
     
     const skillData: SkillEntity = {
       id: crypto.randomUUID(),
-      order: createSkillDto.order,
+      order: newOrder,
       name: createSkillDto.name,
       image_url: createSkillDto.image_url || null
     };

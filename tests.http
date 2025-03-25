@@ -1,39 +1,145 @@
+@baseUrl = http://localhost:3001/api
+
 ### ============================================================
-### MODULE HERO BANNER
+### AUTHENTIFICATION
 ### ============================================================
 
-### Récupérer tous les textes de la Hero Banner
+### Connexion pour obtenir le token
+# @name login
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "admin@example.com",
+  "password": "P@ssw0rd123!"
+}
+
+### Stocker le token dans une variable
+@apiToken = {{login.response.body.access_token}}
+
+### ============================================================
+### MODULE HEROBANNER
+### ============================================================
+
+### Récupérer tous les textes du Hero Banner
 GET {{baseUrl}}/herobanner
 
-### Récupérer tous les textes actifs de la Hero Banner
-GET {{baseUrl}}/herobanner?isActive=true
+### Récupérer un texte du Hero Banner par son ID
+GET {{baseUrl}}/herobanner/9baee584-bfd0-4e6c-9ac5-ab6bc7491607
 
-### Rechercher des textes de la Hero Banner contenant "Full"
-GET {{baseUrl}}/herobanner?search=Full
-
-### Récupérer un texte de Hero Banner par son ID
-GET {{baseUrl}}/herobanner/123e4567-e89b-12d3-a456-426614174000
-
-### Créer un nouveau texte de Hero Banner (authentification requise)
+### Créer un nouveau texte du Hero Banner (authentification requise)
 POST {{baseUrl}}/herobanner
 Content-Type: application/json
 Authorization: Bearer {{apiToken}}
 
 {
-  "text": "Nouveau texte pour la Hero Banner",
-  "isActive": true
+  "text": "Nouveau texte du Hero Banner",
+  "is_active": true
 }
 
-### Mettre à jour un texte de Hero Banner (authentification requise)
-PUT {{baseUrl}}/herobanner/123e4567-e89b-12d3-a456-426614174000
+### Mettre à jour un texte du Hero Banner (authentification requise)
+PUT {{baseUrl}}/herobanner/8110e7c3-3256-4be5-a1df-19495b8b55fe
 Content-Type: application/json
 Authorization: Bearer {{apiToken}}
 
 {
-  "text": "Texte mis à jour pour la Hero Banner",
-  "isActive": false
+  "text": "Texte du Hero Banner mis à jour",
+  "is_active": true
 }
 
-### Supprimer un texte de Hero Banner (authentification requise)
-DELETE {{baseUrl}}/herobanner/123e4567-e89b-12d3-a456-426614174000
-Authorization: Bearer {{apiToken}} 
+### Supprimer un texte du Hero Banner (authentification requise)
+DELETE {{baseUrl}}/herobanner/8110e7c3-3256-4be5-a1df-19495b8b55fe
+Authorization: Bearer {{apiToken}}
+
+### ============================================================
+### MODULE PROJETS
+### ============================================================
+
+### Récupérer tous les projets
+GET {{baseUrl}}/projects
+
+### Récupérer tous les projets avec pagination
+GET {{baseUrl}}/projects?page=1&limit=10
+
+### Rechercher des projets
+GET {{baseUrl}}/projects?search=React
+
+### Récupérer un projet par son ID
+GET {{baseUrl}}/projects/9baee584-bfd0-4e6c-9ac5-ab6bc7491607
+
+### Créer un nouveau projet (authentification requise)
+POST {{baseUrl}}/projects
+Content-Type: application/json
+Authorization: Bearer {{apiToken}}
+
+{
+  "title": "Nouveau Projet",
+  "description": "Description du nouveau projet",
+  "skills": ["React", "Node.js"],
+  "github_link": "https://github.com/username/project",
+  "demo_link": "https://demo-project.example.com",
+  "image_url": "https://example.com/image.jpg"
+}
+
+### Mettre à jour un projet (authentification requise)
+PUT {{baseUrl}}/projects/9baee584-bfd0-4e6c-9ac5-ab6bc7491607
+Content-Type: application/json
+Authorization: Bearer {{apiToken}}
+
+{
+  "title": "Projet Mis à Jour",
+  "description": "Nouvelle description",
+  "technologies": ["React", "Node.js", "TypeScript"],
+  "github_link": "https://github.com/username/updated-project",
+  "category": "Web",
+  "image_url": "https://example.com/new-image.jpg"
+}
+
+### Supprimer un projet (authentification requise)
+DELETE {{baseUrl}}/projects/9baee584-bfd0-4e6c-9ac5-ab6bc7491607
+Authorization: Bearer {{apiToken}}
+
+### ============================================================
+### MODULE SKILLS
+### ============================================================
+
+### Récupérer tout les skills
+GET {{baseUrl}}/skills
+
+### Récupérer tout les skills avec pagination
+GET {{baseUrl}}/skills?page=1&limit=10
+
+### Rechercher des skills
+GET {{baseUrl}}/skills?search=React
+
+### Trier les skills par nom
+GET {{baseUrl}}/skills?sort=name&order=asc
+
+### Récupérer un skill par son ID
+GET {{baseUrl}}/skills/d6bcdf28-aed7-4ba9-965f-6351ec575d72
+
+### Créer un nouveau skill (authentification requise)
+POST {{baseUrl}}/skills
+Content-Type: application/json
+Authorization: Bearer {{apiToken}}
+
+{
+  "name": "Nouveau Skill",
+  "image_url": "https://example.com/image.jpg"
+}
+
+### Mettre à jour un skill (authentification requise)
+PUT {{baseUrl}}/skills/d6bcdf28-aed7-4ba9-965f-6351ec575d72
+Content-Type: application/json
+Authorization: Bearer {{apiToken}}
+
+{
+  "name": "Skill Mis à Jour",
+  "description": "Nouvelle description"
+}
+
+### Supprimer un skill (authentification requise)
+DELETE {{baseUrl}}/skills/d6bcdf28-aed7-4ba9-965f-6351ec575d72
+Authorization: Bearer {{apiToken}}
+
+ 
