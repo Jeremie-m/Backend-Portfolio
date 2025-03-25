@@ -48,8 +48,8 @@ export class ProjectsService {
    */
   findAll(query: FindProjectsDto): PaginatedResult<ProjectDto> {
     const db = this.databaseService.getDatabase();
-    const limit = query.limit || 10;
-    const page = query.page || 1;
+    const limit = query.limit || 100;
+    const page = query.page || 10;
     const offset = (page - 1) * limit;
 
     let sqlQuery = 'SELECT * FROM projects';

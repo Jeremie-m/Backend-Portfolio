@@ -47,7 +47,7 @@ export class SkillsService {
    */
   async findAll(query: FindSkillsDto): Promise<PaginatedResult<SkillDto>> {
     const db = this.databaseService.getDatabase();
-    const { search, limit = 10, page = 1 } = query;
+    const { search, limit = 100, page = 10 } = query;
     const offset = (page - 1) * limit;
 
     let whereClause = '1=1';

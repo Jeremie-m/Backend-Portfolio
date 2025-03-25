@@ -65,8 +65,8 @@ export class HeroBannerService {
     }
 
     // Calcul de la pagination
-    const limit = query.limit || 10;
-    const page = query.page || 1;
+    const limit = query.limit || 100;
+    const page = query.page || 10;
     const offset = (page - 1) * limit;
 
     // Comptage du nombre total d'éléments
