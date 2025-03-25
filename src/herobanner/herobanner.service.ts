@@ -129,26 +129,24 @@ export class HeroBannerService {
     const maxOrder = db.prepare('SELECT MAX("order") as maxOrder FROM hero_banner_texts').get() as { maxOrder: number | null };
     const newOrder = (maxOrder.maxOrder || 0) + 1;  
 
-    const newText: HeroBannerEntity = {
+    const newText: Omit<HeroBannerEntity, 'created_at'> = {
       id: crypto.randomUUID(),
       order: newOrder,
       text: createHeroBannerTextDto.text,
-      is_active: createHeroBannerTextDto.is_active ? 1 : 0,
-      created_at: new Date().toISOString()
+      is_active: createHeroBannerTextDto.is_active ? 1 : 0
     };
 
     const insertStmt = db.prepare(`
       INSERT INTO hero_banner_texts (id, "order", text, is_active, created_at)
-      VALUES (?, ?, ?, ?, ?)
+      VALUES (?, ?, ?, ?, datetime('now', 'localtime'))
     `);
 
     try {
-      insertStmt.run(newText.id, newText.order, newText.text, newText.is_active, newText.created_at);
+      insertStmt.run(newText.id, newText.order, newText.text, newText.is_active);
+      return this.findOne(newText.id);
     } catch (error) {
       throw new InvalidHeroBannerDataException(`Erreur lors de la création du texte: ${error.message}`);
     }
-
-    return this.mapEntityToDtoText(newText);
   }
 
   /**

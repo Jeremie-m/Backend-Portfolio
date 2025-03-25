@@ -72,6 +72,7 @@ GET {{baseUrl}}/projects?search=React
 GET {{baseUrl}}/projects/9baee584-bfd0-4e6c-9ac5-ab6bc7491607
 
 ### Créer un nouveau projet (authentification requise)
+# @name createProject
 POST {{baseUrl}}/projects
 Content-Type: application/json
 Authorization: Bearer {{apiToken}}
@@ -85,8 +86,11 @@ Authorization: Bearer {{apiToken}}
   "image_url": "https://example.com/image.jpg"
 }
 
+###
+@projectId = {{createProject.response.body.id}}
+
 ### Mettre à jour un projet (authentification requise)
-PUT {{baseUrl}}/projects/9baee584-bfd0-4e6c-9ac5-ab6bc7491607
+PUT {{baseUrl}}/projects/{{projectId}}
 Content-Type: application/json
 Authorization: Bearer {{apiToken}}
 
@@ -100,7 +104,7 @@ Authorization: Bearer {{apiToken}}
 }
 
 ### Supprimer un projet (authentification requise)
-DELETE {{baseUrl}}/projects/9baee584-bfd0-4e6c-9ac5-ab6bc7491607
+DELETE {{baseUrl}}/projects/{{projectId}}
 Authorization: Bearer {{apiToken}}
 
 ### ============================================================

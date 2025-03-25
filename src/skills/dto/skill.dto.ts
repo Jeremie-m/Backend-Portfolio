@@ -45,4 +45,14 @@ export class SkillDto {
     nullable: true
   })
   image_url: string | null;
+
+  /**
+   * Date de création de la compétence
+   * @example "2024-03-24 18:35:15"
+   */
+  @ApiProperty({
+    description: 'Date de création de la compétence',
+    example: '2024-03-24 18:35:15'
+  })
+  created_at: string;
 } 

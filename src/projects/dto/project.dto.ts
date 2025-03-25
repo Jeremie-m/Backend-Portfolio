@@ -92,11 +92,11 @@ export class ProjectDto {
 
   /**
    * Date de création du projet
-   * @example "2024-03-23T10:00:00Z"
+   * @example "2024-03-24 18:35:15"
    */
   @ApiProperty({
     description: 'Date de création du projet',
-    example: '2024-03-23T10:00:00Z'
+    example: '2024-03-24 18:35:15'
   })
   created_at: string;
 } 

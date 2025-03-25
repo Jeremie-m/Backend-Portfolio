@@ -115,22 +115,20 @@ export class ProjectsService {
     const maxOrder = db.prepare('SELECT MAX("order") as maxOrder FROM projects').get() as { maxOrder: number | null };
     const newOrder = (maxOrder.maxOrder || 0) + 1;
 
-    const project: ProjectEntity = {
+    const project: Omit<ProjectEntity, 'created_at'> = {
       id: (db.prepare('SELECT uuid() as id').get() as { id: string }).id,
-      order: newOrder, // Utiliser la nouvelle valeur d'order automatiquement calculée
+      order: newOrder,
       title: createProjectDto.title,
       description: createProjectDto.description,
       skills: JSON.stringify(createProjectDto.skills || []),
       github_link: createProjectDto.github_link || null,
       demo_link: createProjectDto.demo_link || null,
-      image_url: createProjectDto.image_url || null,
-      created_at: new Date().toISOString()
+      image_url: createProjectDto.image_url || null
     };
 
-    // Le reste du code reste identique...
     db.prepare(`
       INSERT INTO projects (id, "order", title, description, skills, github_link, demo_link, image_url, created_at)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, datetime('now', 'localtime'))
     `).run(
       project.id,
       project.order,
@@ -139,11 +137,10 @@ export class ProjectsService {
       project.skills,
       project.github_link,
       project.demo_link,
-      project.image_url,
-      project.created_at
+      project.image_url
     );
 
-    return this.mapEntityToDto(project);
+    return this.findOne(project.id);
   }
 
   /**

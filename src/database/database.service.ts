@@ -66,7 +66,7 @@ export class DatabaseService implements OnModuleDestroy {
         github_link TEXT,
         demo_link TEXT,
         image_url TEXT,
-        created_at TEXT NOT NULL
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
       )
     `);
 
@@ -76,7 +76,8 @@ export class DatabaseService implements OnModuleDestroy {
         id TEXT PRIMARY KEY,
         "order" INTEGER NOT NULL,
         name TEXT UNIQUE NOT NULL,
-        image_url TEXT
+        image_url TEXT,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
       )
     `);
 
@@ -96,7 +97,7 @@ export class DatabaseService implements OnModuleDestroy {
       CREATE TABLE IF NOT EXISTS about_me (
         id TEXT PRIMARY KEY,
         text TEXT NOT NULL,
-        updated_at TEXT NOT NULL
+        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
       )
     `);
 
@@ -107,7 +108,7 @@ export class DatabaseService implements OnModuleDestroy {
         "order" INTEGER NOT NULL,
         text TEXT NOT NULL UNIQUE,
         is_active INTEGER NOT NULL DEFAULT 1,
-        created_at TEXT NOT NULL
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
       )
     `);
   }
