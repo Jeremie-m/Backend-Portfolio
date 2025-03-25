@@ -48,9 +48,9 @@ export class ProjectsService {
    */
   findAll(query: FindProjectsDto): PaginatedResult<ProjectDto> {
     const db = this.databaseService.getDatabase();
-    const limit = query.limit || 100;
-    const page = query.page || 10;
-    const offset = (page - 1) * limit;
+    const limit = query.limit || -1;
+    const page = query.page || 1;
+    const offset = (page - 1) * (limit === -1 ? 0 : limit);
 
     let sqlQuery = 'SELECT * FROM projects';
     let countQuery = 'SELECT COUNT(*) as count FROM projects';
@@ -64,8 +64,10 @@ export class ProjectsService {
 
     // Ajout du tri par ordre
     sqlQuery += ' ORDER BY "order" ASC';
-    sqlQuery += ' LIMIT ? OFFSET ?';
-    params.push(limit, offset);
+    if (limit > 0) {
+      sqlQuery += ' LIMIT ? OFFSET ?';
+      params.push(limit, offset);
+    }
 
     const projects = db.prepare(sqlQuery).all(...params) as ProjectEntity[];
     const count = (db.prepare(countQuery).get(...params.slice(0, -2)) as { count: number }).count;

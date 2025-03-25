@@ -47,8 +47,8 @@ export class SkillsService {
    */
   async findAll(query: FindSkillsDto): Promise<PaginatedResult<SkillDto>> {
     const db = this.databaseService.getDatabase();
-    const { search, limit = 100, page = 10 } = query;
-    const offset = (page - 1) * limit;
+    const { search, limit = -1, page = 1 } = query;
+    const offset = (page - 1) * (limit === -1 ? 0 : limit);
 
     let whereClause = '1=1';
     const params: any[] = [];
@@ -67,15 +67,27 @@ export class SkillsService {
     const result = countQuery.get(...params) as { total: number };
     const total = result.total;
 
-    const selectQuery = db.prepare(`
+    let selectQuery = db.prepare(`
       SELECT id, "order", name, image_url, created_at
       FROM skills
       WHERE ${whereClause}
       ORDER BY "order" ASC
-      LIMIT ? OFFSET ?
     `);
 
-    const skills = selectQuery.all(...params, limit, offset) as SkillEntity[];
+    // Ajouter la pagination seulement si une limite est spécifiée
+    if (limit > 0) {
+      selectQuery = db.prepare(`
+        SELECT id, "order", name, image_url, created_at
+        FROM skills
+        WHERE ${whereClause}
+        ORDER BY "order" ASC
+        LIMIT ? OFFSET ?
+      `);
+    }
+
+    const skills = limit > 0 
+      ? selectQuery.all(...params, limit, offset) as SkillEntity[]
+      : selectQuery.all(...params) as SkillEntity[];
 
     return {
       data: skills.map(skill => this.mapEntityToDto(skill)),

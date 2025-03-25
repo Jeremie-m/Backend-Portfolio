@@ -65,9 +65,9 @@ export class HeroBannerService {
     }
 
     // Calcul de la pagination
-    const limit = query.limit || 100;
-    const page = query.page || 10;
-    const offset = (page - 1) * limit;
+    const limit = query.limit || -1;
+    const page = query.page || 1;
+    const offset = (page - 1) * (limit === -1 ? 0 : limit);
 
     // Comptage du nombre total d'éléments
     const countStmt = db.prepare(
@@ -75,11 +75,16 @@ export class HeroBannerService {
     );
     const totalCount = countStmt.get(...params) as { count: number };
 
-    // Ajout de la pagination à la requête
-    sqlQuery += ' ORDER BY "order" ASC LIMIT ? OFFSET ?';
-    params.push(limit, offset);
+    // Ajout du tri par ordre
+    sqlQuery += ' ORDER BY "order" ASC';
 
-    // Exécution de la requête paginée
+    // Ajout de la pagination à la requête seulement si une limite est spécifiée
+    if (limit > 0) {
+      sqlQuery += ' LIMIT ? OFFSET ?';
+      params.push(limit, offset);
+    }
+
+    // Exécution de la requête
     const stmt = db.prepare(sqlQuery);
     const rows = stmt.all(...params) as HeroBannerEntity[];
 
